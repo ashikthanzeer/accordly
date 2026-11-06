@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String?
+  email        String    @unique
+  passwordHash String?
+  projects     Project[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Project {
+  id           String         @id @default(cuid())
+  ownerId      String
+  owner        User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name         String
+  clientName   String
+  clientEmail  String
+  currency     String         @default("USD")
+  pricingModel String         @default("HOURLY")
+  hourlyRate   Decimal?       @db.Decimal(10, 2)
+  status       String         @default("ACTIVE")
+  documents    Document[]
+  baselines    ScopeBaseline[]
+  requests     ChangeRequest[]
+  changeOrders ChangeOrder[]
+  invoices     PayPalInvoice[]
+  events       ProjectEvent[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([ownerId])
+}
+
+model Document {
+  id               String          @id @default(cuid())
+  projectId        String
+  project          Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fileName         String
+  mimeType         String
+  storageKey       String
+  extractedText    String?         @db.Text
+  extractionStatus String          @default("PENDING")
+  baselines        ScopeBaseline[]
+  createdAt        DateTime        @default(now())
+
+  @@index([projectId])
+}
+
+model ScopeBaseline {
+  id              String    @id @default(cuid())
+  projectId       String
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  documentId      String?
+  document        Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  version         Int       @default(1)
+  structuredScope Json
+  confirmedAt     DateTime?
+  confirmedBy     String?
+  createdAt       DateTime  @default(now())
+
+  @@unique([projectId, version])
+  @@index([projectId])
+}
+
+model ChangeRequest {
+  id             String        @id @default(cuid())
+  projectId      String
+  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sourceText     String        @db.Text
+  classification String // IN_SCOPE, OUT_OF_SCOPE, AMBIGUOUS
+  analysis       Json
+  analysisModel  String?
+  promptVersion  String?
+  changeOrders   ChangeOrder[]
+  createdAt      DateTime      @default(now())
+
+  @@index([projectId])
+}
+
+model ChangeOrder {
+  id                   String          @id @default(cuid())
+  projectId            String
+  project              Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  changeRequestId      String?
+  changeRequest        ChangeRequest?  @relation(fields: [changeRequestId], references: [id], onDelete: SetNull)
+  version              Int             @default(1)
+  status               String          @default("DRAFT")
+  description          String          @db.Text
+  deliverables         Json
+  assumptions          String?         @db.Text
+  timelineImpact       String?
+  amount               Decimal         @db.Decimal(10, 2)
+  currency             String          @default("USD")
+  providerApprovedAt   DateTime?
+  clientAcceptedAt     DateTime?
+  clientRejectedAt     DateTime?
+  reviewTokenHash      String?
+  reviewTokenExpiresAt DateTime?
+  invoices             PayPalInvoice[]
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  @@unique([projectId, version])
+  @@index([projectId])
+  @@index([reviewTokenHash])
+}
+
+model PayPalInvoice {
+  id               String       @id @default(cuid())
+  projectId        String
+  project          Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  changeOrderId    String?
+  changeOrder      ChangeOrder? @relation(fields: [changeOrderId], references: [id], onDelete: SetNull)
+  paypalInvoiceId  String       @unique
+  status           String // DRAFT, SENT, PARTIALLY_PAID, PAID, CANCELLED, REFUNDED, UNKNOWN
+  currency         String       @default("USD")
+  amount           Decimal      @db.Decimal(10, 2)
+  hostedInvoiceUrl String?
+  sentAt           DateTime?
+  paidAt           DateTime?
+  lastReconciledAt DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([projectId])
+  @@index([changeOrderId])
+}
+
+model WebhookEvent {
+  id                 String    @id @default(cuid())
+  paypalEventId      String    @unique
+  eventType          String
+  resourceId         String?
+  verificationStatus String // VERIFIED, INVALID, UNVERIFIED
+  processingStatus   String // PENDING, PROCESSED, DUPLICATE, FAILED
+  receivedAt         DateTime  @default(now())
+  processedAt        DateTime?
+  safePayload        Json
+
+  @@index([paypalEventId])
+  @@index([resourceId])
+}
+
+model ProjectEvent {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actorType   String // PROVIDER, CLIENT, SYSTEM, PAYPAL
+  actorId     String?
+  eventType   String
+  description String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([projectId, createdAt])
+}
+

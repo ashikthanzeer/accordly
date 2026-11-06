@@ -1,1 +1,40 @@
+# Strictly don't delete these two from gitignore
 *.md
+openspec/
+.agent/
+
+!README.md
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js build outputs
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env*.local
+.env.development
+.env.test
+.env.production
+!.env.example
+
+# Logs and debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Uploads and temporary private files
+uploads/
+tmp/
+*.tmp
+
+# OS / Editor
+.DS_Store
+Thumbs.db

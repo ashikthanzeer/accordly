@@ -119,18 +119,30 @@ export async function createDraftInvoice(
           },
         },
       ],
-      items: [
-        {
-          name: validated.description.slice(0, 120),
-          description: validated.description,
-          quantity: "1",
-          unit_amount: {
-            currency_code: validated.currency,
-            value: validated.amount,
-          },
-          unit_of_measure: "QUANTITY",
-        },
-      ],
+      items:
+        validated.items && validated.items.length > 0
+          ? validated.items.map((item) => ({
+              name: item.name.slice(0, 120),
+              description: (item.description || item.name).slice(0, 1000),
+              quantity: item.quantity,
+              unit_amount: {
+                currency_code: item.currency || validated.currency,
+                value: item.unitAmount,
+              },
+              unit_of_measure: item.unitOfMeasure || "QUANTITY",
+            }))
+          : [
+              {
+                name: validated.description.slice(0, 120),
+                description: validated.description,
+                quantity: "1",
+                unit_amount: {
+                  currency_code: validated.currency,
+                  value: validated.amount,
+                },
+                unit_of_measure: "QUANTITY",
+              },
+            ],
       configuration: {
         partial_payment: {
           allow_partial_payment: false,
@@ -402,6 +414,20 @@ export async function getInvoice(
   const recipientEmail =
     data.primary_recipients?.[0]?.billing_info?.email_address;
 
+  const rawPayments = (data as any).payments;
+  let paidAmount: string | undefined = rawPayments?.paid_amount?.value;
+  if (!paidAmount) {
+    if (normalizedStatus === "PAID") {
+      paidAmount = data.amount?.value || "0.00";
+    } else if (data.amount?.value && data.due_amount?.value) {
+      const total = parseFloat(data.amount.value);
+      const due = parseFloat(data.due_amount.value);
+      if (Number.isFinite(total) && Number.isFinite(due)) {
+        paidAmount = Math.max(0, total - due).toFixed(2);
+      }
+    }
+  }
+
   return {
     id: resolvedId,
     rawStatus,
@@ -409,6 +435,7 @@ export async function getInvoice(
     currency: data.amount?.currency_code || data.detail?.currency_code || "USD",
     totalAmount: data.amount?.value || "0.00",
     dueAmount: data.due_amount?.value,
+    paidAmount,
     recipientEmail,
     recipientViewUrl,
     invoiceNumber: data.detail?.invoice_number,

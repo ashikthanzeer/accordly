@@ -78,11 +78,21 @@ export function formatDecimalAmount(
   return `${integerPart}.${paddedFraction}`;
 }
 
+export interface ValidatedInvoiceLineItem {
+  name: string;
+  description?: string;
+  quantity: string;
+  unitAmount: string;
+  currency?: string;
+  unitOfMeasure?: string;
+}
+
 export interface ValidatedCreateInvoiceInput {
   recipientEmail: string;
   description: string;
   currency: string;
   amount: string; // Formatted decimal-safe string
+  items?: ValidatedInvoiceLineItem[];
   idempotencyKey?: string;
   invoiceNumber?: string;
   invoiceDate?: string;
@@ -130,11 +140,39 @@ export function validateCreateInvoiceInput(
     );
   }
 
+  let validatedItems: ValidatedInvoiceLineItem[] | undefined;
+  if (Array.isArray(input.items) && input.items.length > 0) {
+    validatedItems = input.items.map((item, idx) => {
+      const name = item.name?.trim();
+      if (!name) {
+        throw new ValidationError(`Line item at index ${idx} must have a non-empty name.`);
+      }
+
+      const qty = typeof item.quantity === "number" ? item.quantity : parseFloat(String(item.quantity));
+      if (!Number.isFinite(qty) || qty <= 0) {
+        throw new ValidationError(`Line item "${name}" must have a quantity greater than zero. Received: ${item.quantity}`);
+      }
+
+      const itemCurrency = item.currency ? item.currency.trim().toUpperCase() : currency;
+      const unitAmount = formatDecimalAmount(item.unitAmount, itemCurrency);
+
+      return {
+        name,
+        description: item.description?.trim() || undefined,
+        quantity: String(qty),
+        unitAmount,
+        currency: itemCurrency,
+        unitOfMeasure: item.unitOfMeasure?.trim() || "QUANTITY",
+      };
+    });
+  }
+
   return {
     recipientEmail,
     description,
     currency,
     amount: formattedAmount,
+    items: validatedItems,
     idempotencyKey: input.idempotencyKey?.trim() || undefined,
     invoiceNumber: input.invoiceNumber?.trim() || undefined,
     invoiceDate: input.invoiceDate?.trim() || undefined,

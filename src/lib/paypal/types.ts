@@ -55,16 +55,71 @@ export function normalizePayPalInvoiceStatus(rawStatus?: string | null): Normali
   }
 }
 
+export interface InvoiceLineItemInput {
+  name: string;
+  description?: string;
+  quantity: string | number;
+  unitAmount: string | number;
+  currency?: string;
+  unitOfMeasure?: string;
+}
+
 export interface CreateInvoiceInput {
   recipientEmail: string;
   description: string;
   currency: string;
   amount: string | number;
+  items?: InvoiceLineItemInput[];
   idempotencyKey?: string;
   invoiceNumber?: string;
   invoiceDate?: string;
   dueDate?: string;
   note?: string;
+}
+
+export interface InvoiceEligibilityResult {
+  eligible: boolean;
+  reason?: string;
+  isAlreadyInvoiced?: boolean;
+  existingInvoice?: {
+    id: string;
+    paypalInvoiceId: string;
+    status: string;
+    amount: string | number;
+    currency: string;
+    hostedInvoiceUrl?: string | null;
+    sentAt?: Date | string | null;
+  } | null;
+}
+
+export interface MappedInvoiceLineItem {
+  id?: string;
+  name: string;
+  description?: string;
+  quantity: number;
+  unitPrice: number;
+  unitAmount: string;
+  subtotal: number;
+  formattedSubtotal: string;
+  currency: string;
+}
+
+export interface MappedInvoicePreview {
+  proposalId: string;
+  projectId: string;
+  recipientEmail: string;
+  recipientName?: string;
+  proposalTitle: string;
+  description: string;
+  currency: string;
+  totalAmount: string;
+  rawAmount: number;
+  lineItems: MappedInvoiceLineItem[];
+  itemCount: number;
+  invoiceNumber?: string;
+  note?: string;
+  isAlreadyInvoiced?: boolean;
+  existingInvoice?: any;
 }
 
 export interface PayPalHateoasLink {
@@ -80,6 +135,7 @@ export interface PayPalInvoiceSummary {
   currency: string;
   totalAmount: string;
   dueAmount?: string;
+  paidAmount?: string;
   recipientEmail?: string;
   recipientViewUrl?: string;
   invoiceNumber?: string;
@@ -95,6 +151,50 @@ export interface SendInvoiceResult {
   recipientViewUrl?: string;
   links?: PayPalHateoasLink[];
   rawResponse?: unknown;
+}
+
+export interface PayPalWebhookHeaders {
+  authAlgo: string;
+  certUrl: string;
+  transmissionId: string;
+  transmissionSig: string;
+  transmissionTime: string;
+}
+
+export interface PayPalWebhookEvent {
+  id: string;
+  event_version?: string;
+  create_time: string;
+  resource_type: string;
+  event_type: string;
+  summary?: string;
+  resource: Record<string, any>;
+  links?: PayPalHateoasLink[];
+}
+
+export interface WebhookVerificationResult {
+  verified: boolean;
+  status: "SUCCESS" | "FAILURE" | "ERROR";
+  error?: string;
+  rawResponse?: unknown;
+}
+
+export interface AuthoritativeReconciliationResult {
+  success: boolean;
+  invoiceId?: string;
+  paypalInvoiceId: string;
+  previousStatus?: string;
+  reconciledStatus: NormalizedInvoiceStatus;
+  rawPayPalStatus: string;
+  amount: string;
+  paidAmount?: string;
+  dueAmount?: string;
+  currency: string;
+  paidAt?: Date | string | null;
+  lastReconciledAt: Date | string;
+  isStatusChanged: boolean;
+  unresolved?: boolean;
+  error?: string;
 }
 
 export class PayPalApiError extends Error {

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, use } from "react";
+import Link from "next/link";
 import { DocumentUpload, type UploadedDocument } from "@/components/agreements/DocumentUpload";
 import { ScopeBaselineReview } from "@/components/baseline/ScopeBaselineReview";
 import type { StructuredScopeBaseline } from "@/lib/ai/schema";
@@ -105,12 +106,34 @@ export default function ProjectBaselinePage({ params }: PageProps) {
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
       {/* Navigation Breadcrumb */}
-      <nav className="flex items-center space-x-2 text-sm text-slate-500">
-        <a href="/" className="hover:text-blue-600 transition">
-          Accordly Dashboard
-        </a>
-        <span>/</span>
-        <span className="text-slate-800 font-medium">Project Scope Baseline</span>
+      <nav className="flex flex-wrap items-center justify-between gap-4 text-sm text-slate-500">
+        <div className="flex items-center space-x-2">
+          <Link href="/" className="hover:text-blue-600 transition">
+            Accordly Dashboard
+          </Link>
+          <span>/</span>
+          <span className="text-slate-800 font-medium">Project Scope Baseline</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/projects/${projectId}/requests`}
+            className="text-xs font-semibold text-slate-600 hover:text-indigo-600 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+          >
+            Requests
+          </Link>
+          <Link
+            href={`/projects/${projectId}/proposals`}
+            className="text-xs font-semibold text-slate-600 hover:text-indigo-600 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+          >
+            Proposals
+          </Link>
+          <Link
+            href={`/projects/${projectId}/timeline`}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-indigo-600 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+          >
+            <span>⏱️</span> Timeline
+          </Link>
+        </div>
       </nav>
 
       <div className="border-b border-slate-200 pb-5 flex flex-wrap items-center justify-between">

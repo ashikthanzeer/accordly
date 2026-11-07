@@ -14,13 +14,16 @@ export function AccordlyIntro() {
   const handleComplete = useCallback(() => {
     try {
       sessionStorage.setItem(STORAGE_KEY, "true");
+      if (typeof document !== "undefined") {
+        document.documentElement.classList.remove("intro-active");
+      }
     } catch {
       // Ignore storage errors in restricted contexts
     }
     setIsExiting(true);
     setTimeout(() => {
       setIsVisible(false);
-    }, 400);
+    }, 600);
   }, []);
 
   useEffect(() => {
@@ -40,22 +43,25 @@ export function AccordlyIntro() {
     }
 
     if (prefersReducedMotion || alreadySeen) {
+      if (typeof document !== "undefined") {
+        document.documentElement.classList.remove("intro-active");
+      }
       return;
     }
 
     // Begin sequence
     setIsVisible(true);
 
-    // Phased 6-scene choreography across 2.7 seconds
-    // Scene 1: Golden Awakening (0 - 450ms)
+    // Phased 6-scene deliberate luxury choreography across ~4.3 seconds
+    // Scene 1: Golden Awakening (0.0s – 0.8s)
     setScene(1);
 
-    const t2 = setTimeout(() => setScene(2), 500); // Scene 2: Document outline draw (500 - 1000ms)
-    const t3 = setTimeout(() => setScene(3), 1050); // Scene 3: Approval checkmark draw (1050 - 1550ms)
-    const t4 = setTimeout(() => setScene(4), 1600); // Scene 4: Scope-to-Cash arrow trajectory (1600 - 2050ms)
-    const t5 = setTimeout(() => setScene(5), 2100); // Scene 5: Wordmark reveal & reflection sweep (2100 - 2500ms)
-    const t6 = setTimeout(() => setScene(6), 2550); // Scene 6: Website dissolution start (2550ms)
-    const tEnd = setTimeout(() => handleComplete(), 2850);
+    const t2 = setTimeout(() => setScene(2), 800);  // Scene 2: Document outline draw (0.8s – 1.6s)
+    const t3 = setTimeout(() => setScene(3), 1600); // Scene 3: Approval checkmark draw (1.6s – 2.4s)
+    const t4 = setTimeout(() => setScene(4), 2400); // Scene 4: Scope-to-Cash arrow trajectory (2.4s – 3.2s)
+    const t5 = setTimeout(() => setScene(5), 3200); // Scene 5: Wordmark reveal & reflection sweep (3.2s – 3.8s)
+    const t6 = setTimeout(() => setScene(6), 3800); // Scene 6: Website dissolution start (3.8s – 4.3s)
+    const tEnd = setTimeout(() => handleComplete(), 4300);
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -82,7 +88,7 @@ export function AccordlyIntro() {
   return (
     <aside
       aria-label="Accordly brand introduction"
-      className={`fixed inset-0 z-[100] flex items-center justify-center bg-[#07080B] overflow-hidden transition-opacity duration-500 ease-out ${
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-[#07080B] overflow-hidden transition-opacity duration-700 ease-out ${
         isExiting ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto"
       }`}
     >
@@ -118,23 +124,23 @@ export function AccordlyIntro() {
         .anim-draw-doc {
           stroke-dasharray: 600;
           stroke-dashoffset: 0;
-          animation: accordlyDrawPath 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: accordlyDrawPath 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         .anim-draw-check {
           stroke-dasharray: 80;
           stroke-dashoffset: 0;
-          animation: accordlyDrawCheck 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: accordlyDrawCheck 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         .anim-draw-arrow {
           stroke-dasharray: 300;
           stroke-dashoffset: 0;
-          animation: accordlyDrawArrow 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: accordlyDrawArrow 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         .anim-ripple {
-          animation: accordlyRipple 0.9s cubic-bezier(0, 0, 0.2, 1) forwards;
+          animation: accordlyRipple 1.2s cubic-bezier(0, 0, 0.2, 1) forwards;
         }
         .anim-sheen {
-          animation: accordlySheen 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: accordlySheen 1.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
       `}</style>
 
@@ -161,14 +167,14 @@ export function AccordlyIntro() {
       {/* Golden Micro-Particles (Scene 1 — Golden Awakening) */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {[
-          { top: "35%", left: "42%", delay: "0s", duration: "2.8s", size: "w-1 h-1" },
-          { top: "60%", left: "55%", delay: "0.2s", duration: "3.2s", size: "w-1.5 h-1.5" },
-          { top: "45%", left: "62%", delay: "0.4s", duration: "2.6s", size: "w-1 h-1" },
-          { top: "52%", left: "38%", delay: "0.1s", duration: "3s", size: "w-1 h-1" },
-          { top: "30%", left: "52%", delay: "0.5s", duration: "3.5s", size: "w-1.5 h-1.5" },
-          { top: "68%", left: "46%", delay: "0.3s", duration: "2.9s", size: "w-1 h-1" },
-          { top: "40%", left: "35%", delay: "0.6s", duration: "3.1s", size: "w-1 h-1" },
-          { top: "58%", left: "65%", delay: "0.4s", duration: "2.7s", size: "w-1.5 h-1.5" },
+          { top: "35%", left: "42%", delay: "0s", duration: "3.2s", size: "w-1 h-1" },
+          { top: "60%", left: "55%", delay: "0.2s", duration: "3.6s", size: "w-1.5 h-1.5" },
+          { top: "45%", left: "62%", delay: "0.4s", duration: "3.0s", size: "w-1 h-1" },
+          { top: "52%", left: "38%", delay: "0.1s", duration: "3.4s", size: "w-1 h-1" },
+          { top: "30%", left: "52%", delay: "0.5s", duration: "3.8s", size: "w-1.5 h-1.5" },
+          { top: "68%", left: "46%", delay: "0.3s", duration: "3.3s", size: "w-1 h-1" },
+          { top: "40%", left: "35%", delay: "0.6s", duration: "3.5s", size: "w-1 h-1" },
+          { top: "58%", left: "65%", delay: "0.4s", duration: "3.1s", size: "w-1.5 h-1.5" },
         ].map((pt, i) => (
           <div
             key={i}
@@ -179,7 +185,7 @@ export function AccordlyIntro() {
               animation: `accordlyDrift ${pt.duration} ease-in-out infinite`,
               animationDelay: pt.delay,
               opacity: scene >= 1 ? 0.75 : 0,
-              transition: "opacity 0.6s ease",
+              transition: "opacity 0.8s ease",
             }}
           />
         ))}
@@ -215,7 +221,7 @@ export function AccordlyIntro() {
 
             {/* SCENE 2: Document Animation (Left Document Box) */}
             {scene >= 2 && (
-              <g className="transition-all duration-500">
+              <g className="transition-all duration-700">
                 {/* Document Border Outline */}
                 <path
                   d="M 40 40 L 110 40 L 135 65 L 135 160 L 40 160 Z"
@@ -246,10 +252,10 @@ export function AccordlyIntro() {
                   stroke="#EEC25C"
                   strokeWidth="2"
                   strokeLinecap="round"
-                  className="transition-all duration-300"
+                  className="transition-all duration-500"
                   style={{
                     opacity: scene >= 2 ? 0.9 : 0,
-                    transitionDelay: "150ms",
+                    transitionDelay: "200ms",
                   }}
                 />
                 <line
@@ -260,10 +266,10 @@ export function AccordlyIntro() {
                   stroke="#D4AF65"
                   strokeWidth="2"
                   strokeLinecap="round"
-                  className="transition-all duration-300"
+                  className="transition-all duration-500"
                   style={{
                     opacity: scene >= 2 ? 0.75 : 0,
-                    transitionDelay: "300ms",
+                    transitionDelay: "450ms",
                   }}
                 />
                 <line
@@ -274,10 +280,10 @@ export function AccordlyIntro() {
                   stroke="#D4AF65"
                   strokeWidth="2"
                   strokeLinecap="round"
-                  className="transition-all duration-300"
+                  className="transition-all duration-500"
                   style={{
                     opacity: scene >= 2 ? 0.6 : 0,
-                    transitionDelay: "450ms",
+                    transitionDelay: "700ms",
                   }}
                 />
               </g>
@@ -285,7 +291,7 @@ export function AccordlyIntro() {
 
             {/* SCENE 3: Commercial Approval Circle & Checkmark */}
             {scene >= 3 && (
-              <g className="transition-all duration-300">
+              <g className="transition-all duration-500">
                 {/* Pulse wave ring */}
                 <circle
                   cx="120"
@@ -321,7 +327,7 @@ export function AccordlyIntro() {
 
             {/* SCENE 4: Scope-to-Cash Arrow & Invoice Arrival */}
             {scene >= 4 && (
-              <g className="transition-all duration-500">
+              <g className="transition-all duration-700">
                 {/* Animated Scope-to-Cash Trajectory Beam */}
                 <path
                   d="M 140 140 C 175 140, 185 85, 215 85"
@@ -336,7 +342,7 @@ export function AccordlyIntro() {
                 <polygon
                   points="218,80 226,85 218,90"
                   fill="#F4CF70"
-                  className="transition-opacity duration-300"
+                  className="transition-opacity duration-500"
                   style={{ opacity: scene >= 4 ? 1 : 0 }}
                 />
 
@@ -350,10 +356,11 @@ export function AccordlyIntro() {
                   fill="rgba(17, 19, 24, 0.9)"
                   stroke="url(#goldGradient)"
                   strokeWidth="2"
-                  className="transition-all duration-500"
+                  className="transition-all duration-700"
                   style={{
                     opacity: scene >= 4 ? 1 : 0,
                     transform: scene >= 4 ? "translateY(0)" : "translateY(8px)",
+                    transitionDelay: "350ms",
                   }}
                 />
                 {/* Invoice Header Badge */}
@@ -364,7 +371,7 @@ export function AccordlyIntro() {
                   height="8"
                   rx="2"
                   fill="#F4CF70"
-                  style={{ opacity: scene >= 4 ? 0.9 : 0 }}
+                  style={{ opacity: scene >= 4 ? 0.9 : 0, transitionDelay: "450ms" }}
                 />
                 {/* Invoice Currency Sign / Check */}
                 <text
@@ -375,7 +382,7 @@ export function AccordlyIntro() {
                   fontWeight="bold"
                   fontFamily="monospace"
                   textAnchor="middle"
-                  style={{ opacity: scene >= 4 ? 1 : 0 }}
+                  style={{ opacity: scene >= 4 ? 1 : 0, transitionDelay: "550ms" }}
                 >
                   $
                 </text>
@@ -388,7 +395,7 @@ export function AccordlyIntro() {
                   stroke="#43B581"
                   strokeWidth="2.5"
                   strokeLinecap="round"
-                  style={{ opacity: scene >= 4 ? 1 : 0 }}
+                  style={{ opacity: scene >= 4 ? 1 : 0, transitionDelay: "650ms" }}
                 />
               </g>
             )}
@@ -397,7 +404,7 @@ export function AccordlyIntro() {
 
         {/* SCENE 5: Wordmark Reveal & Specular Sheen Sweep */}
         <div
-          className={`relative mt-4 flex flex-col items-center transition-all duration-700 ease-out overflow-hidden px-6 py-2 rounded-2xl ${
+          className={`relative mt-4 flex flex-col items-center transition-all duration-1000 ease-out overflow-hidden px-6 py-2 rounded-2xl ${
             scene >= 5
               ? "opacity-100 translate-y-0 scale-100"
               : "opacity-0 translate-y-4 scale-95"
@@ -425,7 +432,7 @@ export function AccordlyIntro() {
 
           {/* Subtitle FinTech Baseline */}
           <p
-            className={`text-[10px] sm:text-xs font-mono uppercase tracking-[0.25em] text-[#D4AF65] mt-2 font-semibold transition-all duration-500 ${
+            className={`text-[10px] sm:text-xs font-mono uppercase tracking-[0.25em] text-[#D4AF65] mt-2 font-semibold transition-all duration-700 ${
               scene >= 5 ? "opacity-90 tracking-[0.3em]" : "opacity-0 tracking-widest"
             }`}
           >
@@ -435,17 +442,16 @@ export function AccordlyIntro() {
 
         {/* Status Indication (Scene 6 — Transitioning) */}
         <div
-          className={`mt-6 flex items-center gap-2 transition-opacity duration-300 ${
+          className={`mt-6 flex items-center gap-2 transition-opacity duration-500 ${
             scene >= 6 ? "opacity-100" : "opacity-0"
           }`}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-[#43B581] animate-ping" />
           <span className="text-[11px] font-mono text-[#9298A3] tracking-wide">
-            Entering Terminal...
+            Terminal Ready
           </span>
         </div>
       </div>
     </aside>
   );
 }
-

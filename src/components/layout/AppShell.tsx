@@ -34,8 +34,9 @@ export function AppShell({
       {/* Cinematic Logo Introduction Overlay */}
       <AccordlyIntro />
 
-      {/* Ambient Animated Background Layer */}
-      <AmbientBackground showParticles={true} />
+      <div id="accordly-shell" className="flex-1 flex min-h-screen relative w-full">
+        {/* Ambient Animated Background Layer */}
+        <AmbientBackground showParticles={true} />
 
       {/* Sidebar Navigation */}
       <Sidebar
@@ -115,5 +116,6 @@ export function AppShell({
         </main>
       </div>
     </div>
-  );
+  </div>
+);
 }

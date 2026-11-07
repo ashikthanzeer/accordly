@@ -21,6 +21,33 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (!sessionStorage.getItem('accordly_intro_seen') && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                  document.documentElement.classList.add('intro-active');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              html.intro-active #accordly-shell {
+                opacity: 0 !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+              }
+              #accordly-shell {
+                transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.8s;
+              }
+            `,
+          }}
+        />
+      </head>
       <body className="antialiased min-h-screen bg-[#090A0C] text-[#F5F3ED]">
         {children}
       </body>

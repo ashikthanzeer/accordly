@@ -35,8 +35,14 @@ export interface StoredDocumentResult {
 
 /**
  * Returns the base storage directory for uploaded documents.
+ * Respects STORAGE_DIR (e.g. Render Persistent Disk mounted at /var/data/uploads)
+ * with a fallback to local uploads/documents in development.
  */
 export function getDocumentsStorageDir(): string {
+  const customDir = process.env.STORAGE_DIR?.trim();
+  if (customDir) {
+    return path.resolve(customDir);
+  }
   return path.resolve(process.cwd(), "uploads", "documents");
 }
 

@@ -201,20 +201,152 @@ Accordly integrates with the official **PayPal Invoicing REST API v2**:
 
 ---
 
-## 11. Environment Variable Reference
+## 10. Production Deployment Runbook (Vercel + Render + NeonDB)
 
-| Variable | Required | Description | Example |
-| :--- | :--- | :--- | :--- |
-| `DATABASE_URL` | Yes | PostgreSQL connection string | `postgresql://postgres:password@localhost:5432/accordly?schema=public` |
-| `PAYPAL_ENV` | Yes | PayPal environment mode (`sandbox` or `live`) | `sandbox` |
-| `PAYPAL_CLIENT_ID` | Yes | PayPal REST app client ID | `BAA2GzTi...` |
-| `PAYPAL_CLIENT_SECRET` | Yes | PayPal REST app secret | `EIjCWmVE...` |
-| `PAYPAL_BASE_URL` | Yes | PayPal API base URL | `https://api-m.sandbox.paypal.com` |
-| `PAYPAL_WEBHOOK_ID` | Optional | PayPal Webhook subscription ID | `4WH12345ABCDE` |
-| `AI_PROVIDER` | Optional | AI provider selection (`gemini`, `openai`, `mock`) | `gemini` |
-| `GEMINI_API_KEY` | Optional | Google Gemini API key | `AQ.Ab8RN6...` |
-| `AI_MODEL` | Optional | Gemini model identifier | `gemini-1.5-flash` |
-| `NEXT_PUBLIC_APP_URL` | Optional | Application base URL | `http://localhost:3000` |
+Accordly employs a distributed production topology:
+- **Frontend Presentation**: Hosted on **Vercel**, serving React 19 UI and transparently proxying `/api/*` requests to Render via Next.js `rewrites()`.
+- **Backend Web Service**: Hosted on **Render**, executing Next.js route handlers, AI classification, PayPal invoice operations, and webhook reconciliation.
+- **Database**: Hosted on **NeonDB Serverless PostgreSQL**, with connection pooling for runtime queries and direct connections for schema synchronization.
+- **Document Storage**: Stored durably on a **Render Persistent Disk** mounted at `/var/data` (`STORAGE_DIR=/var/data/uploads`).
+- **Payments**: Directly integrated with **PayPal Sandbox** using REST v2 APIs and webhooks.
+
+```text
+                    CLIENTS / USERS
+                          |
+                          v
+                    VERCEL FRONTEND
+                  (accordly.vercel.app)
+                          |
+                     /api/* calls
+                   (Vercel Rewrites)
+                          |
+                          v
+                 RENDER WEB SERVICE
+             (accordly-api.onrender.com)
+                          |
+             +------------+------------+
+             |                         |
+             v                         v
+     NEONDB POSTGRESQL         PAYPAL SANDBOX
+ (ep-pooler.c-8.neon.tech)  (api-m.sandbox.paypal.com)
+```
+
+---
+
+### Step 1: NeonDB PostgreSQL Setup
+
+1. Create a project in [Neon Console](https://console.neon.tech/).
+2. Copy the connection strings from your database dashboard:
+   - **Pooled connection string** (contains `-pooler`): Use as `DATABASE_URL`.
+   - **Direct connection string** (without `-pooler`): Use as `DIRECT_URL`.
+3. Bootstrap the database schema (one-time setup):
+   ```bash
+   DATABASE_URL="<your-pooled-url>" DIRECT_URL="<your-direct-url>" npx prisma db push
+   ```
+   *(Note: Do not run destructive database resets in production).*
+
+---
+
+### Step 2: Render Backend Web Service Deployment
+
+1. In the [Render Dashboard](https://dashboard.render.com/), click **New > Web Service**.
+2. Connect your GitHub repository.
+3. Configure service runtime:
+   - **Name**: `accordly-api` (or your preferred name)
+   - **Environment**: `Node`
+   - **Region**: Same or nearest region to NeonDB (e.g. `Ohio / us-east-2`)
+   - **Branch**: `main`
+   - **Build Command**: `npm install && npm run build` (runs `prisma generate && next build`)
+   - **Start Command**: `npm run start`
+   - **Plan**: `Starter` ($7/mo recommended to prevent cold-start webhook dropouts)
+4. **Attach a Persistent Disk**:
+   - Go to **Disks > Add Disks**.
+   - **Name**: `accordly-uploads`
+   - **Mount Path**: `/var/data`
+   - **Size**: `1 GB` (or as needed)
+5. Add the **Environment Variables** in Render:
+   - `DATABASE_URL`: Your NeonDB pooled connection URL.
+   - `DIRECT_URL`: Your NeonDB direct connection URL.
+   - `STORAGE_DIR`: `/var/data/uploads` (points to the attached persistent disk).
+   - `NEXT_PUBLIC_APP_URL`: `https://<your-vercel-domain>.vercel.app` (ensures review links target Vercel).
+   - `PAYPAL_ENV`: `sandbox`
+   - `PAYPAL_BASE_URL`: `https://api-m.sandbox.paypal.com`
+   - `PAYPAL_CLIENT_ID`: Your PayPal Sandbox App Client ID.
+   - `PAYPAL_CLIENT_SECRET`: Your PayPal Sandbox App Client Secret.
+   - `PAYPAL_WEBHOOK_ID`: *(Obtained in Step 4 below)*.
+   - `AI_PROVIDER`: `gemini` (or `openai` / `mock`).
+   - `GEMINI_API_KEY`: Your Google Gemini API Key.
+   - `AI_MODEL`: `gemini-1.5-flash`
+   - `NODE_ENV`: `production`
+6. Click **Deploy Web Service** and note your Render service URL: `https://accordly-api.onrender.com`.
+
+---
+
+### Step 3: Vercel Frontend Deployment
+
+1. In the [Vercel Dashboard](https://vercel.com/dashboard), click **Add New > Project** and import the repository.
+2. Framework preset: **Next.js**.
+3. Configure **Environment Variables** in Vercel:
+   - `BACKEND_API_URL`: `https://accordly-api.onrender.com` (Your live Render service URL from Step 2).
+   - `NEXT_PUBLIC_APP_URL`: `https://<your-vercel-domain>.vercel.app` (Your public Vercel production domain).
+   - `NODE_ENV`: `production`
+4. Click **Deploy**.
+5. Once deployed, Vercel will serve the Next.js UI and transparently proxy all `/api/*` calls directly to your Render backend via `next.config.ts` rewrites with zero CORS latency.
+
+---
+
+### Step 4: PayPal Webhook Registration
+
+1. Sign in to the [PayPal Developer Dashboard](https://developer.paypal.com/).
+2. Navigate to **Apps & Credentials > Sandbox Apps** and select your application.
+3. Scroll down to **Webhooks** and click **Add Webhook**.
+4. Set **Webhook URL** directly to your Render backend service:
+   ```text
+   https://accordly-api.onrender.com/api/webhooks/paypal
+   ```
+   *(Important: Do not route PayPal webhooks through Vercel).*
+5. Select event triggers:
+   - `Invoicing invoice paid` (`INVOICING.INVOICE.PAID`)
+   - `Invoicing invoice updated` (`INVOICING.INVOICE.UPDATED`)
+   - `Invoicing invoice cancelled` (`INVOICING.INVOICE.CANCELLED`)
+6. Save the webhook and copy the generated **Webhook ID**.
+7. Return to the Render Dashboard and paste it as `PAYPAL_WEBHOOK_ID`. Click **Save Changes** to redeploy.
+
+> **Cold-Start Advisory**: If running on Render Free Tier, the container will sleep after 15 minutes of inactivity. An incoming webhook may wake the instance up (30–50s delay), which can exceed PayPal's 5–10s webhook timeout. Using Render's **Starter** tier or pinging `/api/dashboard/overview` avoids webhook retry storms.
+
+---
+
+### Step 5: Verification & Post-Deployment Smoke Test
+
+- [ ] Open `https://<your-vercel-domain>.vercel.app` and verify Executive Dashboard KPIs load cleanly.
+- [ ] Upload an agreement PDF; verify document is parsed and saved to `/var/data/uploads`.
+- [ ] Confirm baseline v1, submit a change request, and verify AI classification outputs.
+- [ ] Create a proposal, approve it, and generate a client review link. Verify link domain matches `https://<your-vercel-domain>.vercel.app/review/<token>`.
+- [ ] Open the review link in an Incognito tab, accept the proposal, and verify status updates in the provider workspace.
+- [ ] Click "Create PayPal Invoice", dispatch invoice, and open the live PayPal Sandbox payment link.
+- [ ] Complete payment in Sandbox; verify webhook signature verification and status update to `PAID`.
+
+---
+
+## 11. Environment Variable Reference Matrix
+
+| Variable | Platform | Required | Purpose | Example |
+| :--- | :--- | :--- | :--- | :--- |
+| `BACKEND_API_URL` | Vercel | Yes | URL of Render backend for Next.js API rewrites | `https://accordly-api.onrender.com` |
+| `NEXT_PUBLIC_APP_URL` | Both | Yes | Canonical public frontend URL for review links | `https://accordly.vercel.app` |
+| `DATABASE_URL` | Render | Yes | NeonDB connection pooler URL for runtime queries | `postgresql://user:pass@ep-pooler.c-8.neon.tech/neondb?sslmode=require` |
+| `DIRECT_URL` | Render | Yes | NeonDB direct connection URL for schema push | `postgresql://user:pass@ep-direct.c-8.neon.tech/neondb?sslmode=require` |
+| `STORAGE_DIR` | Render | Yes | Path to persistent disk for agreement PDFs | `/var/data/uploads` |
+| `PAYPAL_ENV` | Render | Yes | PayPal environment mode (`sandbox` or `live`) | `sandbox` |
+| `PAYPAL_CLIENT_ID` | Render | Yes | PayPal REST app client ID | `BAA2GzTi...` |
+| `PAYPAL_CLIENT_SECRET` | Render | Yes | PayPal REST app secret (Keep Secret!) | `EIjCWmVE...` |
+| `PAYPAL_BASE_URL` | Render | Yes | PayPal API base URL | `https://api-m.sandbox.paypal.com` |
+| `PAYPAL_WEBHOOK_ID` | Render | Yes | Webhook listener ID issued by PayPal | `4WH12345ABCDE` |
+| `AI_PROVIDER` | Render | Yes | AI engine (`gemini`, `openai`, `mock`) | `gemini` |
+| `GEMINI_API_KEY` | Render | Optional | Google Gemini API key (Keep Secret!) | `AQ.Ab8RN6...` |
+| `AI_MODEL` | Render | Optional | Gemini model identifier | `gemini-1.5-flash` |
+| `CORS_ALLOWED_ORIGINS`| Render | Optional | Whitelisted origins if direct browser access is used | `https://accordly.vercel.app` |
+| `NODE_ENV` | Both | Yes | Node execution environment | `production` |
 
 ---
 

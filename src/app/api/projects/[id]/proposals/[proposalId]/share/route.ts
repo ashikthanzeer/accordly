@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { generateSecureReviewToken } from "@/lib/proposals/tokens";
+import { getPublicReviewUrl } from "@/lib/config/urls";
 
 interface RouteParams {
   params: Promise<{ id: string; proposalId: string }>;
@@ -76,16 +77,14 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       },
     });
 
-    // Form shareable URL
-    const origin = req.nextUrl.origin || "http://localhost:3000";
-    const reviewPath = `/review/${token}`;
-    const fullReviewUrl = `${origin}${reviewPath}`;
+    // Form shareable URL pointing to public frontend (NEXT_PUBLIC_APP_URL)
+    const { reviewPath, reviewUrl } = getPublicReviewUrl(token, req.nextUrl?.origin);
 
     return NextResponse.json({
       success: true,
       token,
       reviewPath,
-      reviewUrl: fullReviewUrl,
+      reviewUrl,
       expiresAt: expiresAt.toISOString(),
       proposal: updated,
     });

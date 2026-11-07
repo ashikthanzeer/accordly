@@ -3,6 +3,7 @@
 import React, { useEffect, useState, use } from "react";
 import { AmbientBackground } from "@/components/ui/AmbientBackground";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { AnimatedAccordlyLogo } from "@/components/brand/AnimatedAccordlyLogo";
 import type { PublicProposalSnapshot } from "@/lib/proposals/serializer";
 
 interface PageProps {
@@ -144,9 +145,7 @@ export default function ClientReviewPage({ params }: PageProps) {
       <header className="bg-[#111318]/80 border-b border-white/[0.08] sticky top-0 z-20 backdrop-blur-md">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#D4AF65] to-[#A98746] flex items-center justify-center shadow-lg shadow-[#D4AF65]/10">
-              <span className="text-[#090A0C] font-black text-sm tracking-tighter">A</span>
-            </div>
+            <AnimatedAccordlyLogo variant="symbol" size="sm" />
             <div>
               <span className="text-sm font-extrabold text-[#F5F3ED] tracking-tight">
                 Accordly

@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AnimatedAccordlyLogo } from "@/components/brand/AnimatedAccordlyLogo";
 
 interface SidebarProps {
   projectId?: string;
@@ -46,15 +47,13 @@ export function Sidebar({
         {/* Brand Header */}
         <div className="px-6 py-6 border-b border-white/[0.08]">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#E2C17F] to-[#A98746] flex items-center justify-center shadow-lg shadow-[#D4AF65]/15 group-hover:scale-105 group-hover:shadow-[#D4AF65]/25 transition-all">
-              <span className="text-[#090A0C] font-black text-lg tracking-wider">A</span>
-            </div>
+            <AnimatedAccordlyLogo variant="symbol" size="sm" />
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-base font-bold tracking-tight text-[#F5F3ED] font-mono group-hover:text-[#D4AF65] transition-colors">
                   ACCORDLY
                 </span>
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#D4AF65]/15 text-[#D4AF65] border border-[#D4AF65]/30">
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#D4AF65]/15 text-[#D4AF65] border border-[#D4AF65]/30 font-mono">
                   PRO
                 </span>
               </div>

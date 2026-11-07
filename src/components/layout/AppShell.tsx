@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Sidebar } from "./Sidebar";
 import { AmbientBackground } from "@/components/ui/AmbientBackground";
+import { AccordlyIntro } from "@/components/brand/AccordlyIntro";
 
 export interface BreadcrumbItem {
   label: string;
@@ -30,6 +31,9 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-[#090A0C] text-[#F5F3ED] flex relative selection:bg-[#D4AF65]/30 selection:text-[#F5F3ED]">
+      {/* Cinematic Logo Introduction Overlay */}
+      <AccordlyIntro />
+
       {/* Ambient Animated Background Layer */}
       <AmbientBackground showParticles={true} />
 

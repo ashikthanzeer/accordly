@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { GlassCard } from "@/components/ui/GlassCard";
 import type { ProposalSuggestedDeliverable } from "@/lib/ai/proposal-drafter";
 
 interface ProposalContentState {
@@ -104,9 +105,9 @@ export function ProposalContentEditor({
   return (
     <div className="space-y-6">
       {/* Title & Description Card */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4">
+      <GlassCard variant="surface" intensity="prominent" className="p-6 space-y-4">
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-[#9298A3] mb-1">
             Proposal Title
           </label>
           <input
@@ -114,12 +115,12 @@ export function ProposalContentEditor({
             disabled={isReadOnly}
             value={content.title}
             onChange={(e) => handleTitleChange(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-base font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50"
+            className="w-full px-3.5 py-2.5 rounded-lg bg-[#090A0C]/90 border border-[#292D35] text-base font-bold text-[#F5F3ED] placeholder-[#9298A3]/50 focus:outline-none focus:border-[#D4AF65] disabled:opacity-60 transition-colors"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-[#9298A3] mb-1">
             Summary of Proposed Work
           </label>
           <textarea
@@ -127,12 +128,12 @@ export function ProposalContentEditor({
             disabled={isReadOnly}
             value={content.description}
             onChange={(e) => handleDescriptionChange(e.target.value)}
-            className="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50"
+            className="w-full px-3.5 py-2 rounded-lg bg-[#090A0C]/90 border border-[#292D35] text-sm text-[#F5F3ED] placeholder-[#9298A3]/50 focus:outline-none focus:border-[#D4AF65] disabled:opacity-60 transition-colors"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-[#9298A3] mb-1">
             Commercial Rationale & Reason for Change
           </label>
           <textarea
@@ -140,19 +141,19 @@ export function ProposalContentEditor({
             disabled={isReadOnly}
             value={content.reasonForChange}
             onChange={(e) => handleReasonChange(e.target.value)}
-            className="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50"
+            className="w-full px-3.5 py-2 rounded-lg bg-[#090A0C]/90 border border-[#292D35] text-sm text-[#F5F3ED] placeholder-[#9298A3]/50 focus:outline-none focus:border-[#D4AF65] disabled:opacity-60 transition-colors"
           />
         </div>
-      </div>
+      </GlassCard>
 
       {/* Deliverables List */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+      <GlassCard variant="surface" intensity="prominent" className="p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-[#292D35] pb-3">
           <div>
-            <h3 className="text-base font-bold text-slate-900">
+            <h3 className="text-base font-bold text-[#F5F3ED]">
               Proposed Deliverables ({content.deliverables.length})
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#9298A3]">
               Specific outputs and acceptance criteria covered under this change order.
             </p>
           </div>
@@ -160,7 +161,7 @@ export function ProposalContentEditor({
             <button
               type="button"
               onClick={handleAddDeliverable}
-              className="inline-flex items-center text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
+              className="inline-flex items-center text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#D4AF65]/10 text-[#D4AF65] border border-[#D4AF65]/30 hover:bg-[#D4AF65]/20 transition-all hover:scale-[1.01] active:scale-[0.98]"
             >
               + Add Deliverable
             </button>
@@ -171,7 +172,7 @@ export function ProposalContentEditor({
           {content.deliverables.map((del, idx) => (
             <div
               key={del.id || idx}
-              className="border border-slate-200 rounded-lg p-4 bg-slate-50/50 space-y-3"
+              className="border border-[#292D35] rounded-xl p-4 bg-[#111318]/70 hover:bg-[#111318] space-y-3 hover:border-[#D4AF65]/30 transition-all"
             >
               <div className="flex items-center justify-between gap-2">
                 <input
@@ -181,11 +182,11 @@ export function ProposalContentEditor({
                   onChange={(e) =>
                     handleUpdateDeliverable(idx, { name: e.target.value })
                   }
-                  className="font-bold text-sm text-slate-900 bg-white border border-slate-300 rounded px-2.5 py-1.5 flex-1 max-w-md focus:ring-1 focus:ring-indigo-500"
+                  className="font-bold text-sm text-[#F5F3ED] bg-[#090A0C]/90 border border-[#292D35] rounded px-2.5 py-1.5 flex-1 max-w-md focus:outline-none focus:border-[#D4AF65]"
                 />
 
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-500 font-medium">Est. Hours:</span>
+                  <span className="text-xs text-[#9298A3] font-medium">Est. Hours:</span>
                   <input
                     type="number"
                     min="0"
@@ -197,13 +198,13 @@ export function ProposalContentEditor({
                         suggestedEffortHours: Number(e.target.value),
                       })
                     }
-                    className="w-16 text-xs text-center font-semibold bg-white border border-slate-300 rounded py-1"
+                    className="w-16 text-xs text-center font-mono font-semibold text-[#F5F3ED] bg-[#090A0C]/90 border border-[#292D35] rounded py-1 focus:outline-none focus:border-[#D4AF65]"
                   />
                   {!isReadOnly && (
                     <button
                       type="button"
                       onClick={() => handleRemoveDeliverable(idx)}
-                      className="text-slate-400 hover:text-rose-600 transition-colors text-sm px-1.5"
+                      className="text-[#9298A3] hover:text-[#E06C75] transition-colors text-sm px-1.5"
                     >
                       &times;
                     </button>
@@ -220,12 +221,12 @@ export function ProposalContentEditor({
                     handleUpdateDeliverable(idx, { description: e.target.value })
                   }
                   placeholder="Deliverable description and specifications..."
-                  className="w-full text-xs text-slate-800 bg-white border border-slate-200 rounded p-2 focus:ring-1 focus:ring-indigo-500"
+                  className="w-full text-xs text-[#F5F3ED] bg-[#090A0C]/90 border border-[#292D35] rounded p-2 focus:outline-none focus:border-[#D4AF65] placeholder-[#9298A3]/50"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold uppercase text-slate-500 mb-1">
+                <label className="block text-[11px] font-semibold uppercase text-[#9298A3] mb-1">
                   Acceptance Criteria (comma-separated or one per line):
                 </label>
                 <input
@@ -241,27 +242,27 @@ export function ProposalContentEditor({
                     })
                   }
                   placeholder="e.g. Browser validation; Staging testing"
-                  className="w-full text-xs text-slate-700 bg-white border border-slate-200 rounded px-2 py-1"
+                  className="w-full text-xs text-[#F5F3ED] bg-[#090A0C]/90 border border-[#292D35] rounded px-2 py-1.5 focus:outline-none focus:border-[#D4AF65] placeholder-[#9298A3]/50"
                 />
               </div>
             </div>
           ))}
         </div>
-      </div>
+      </GlassCard>
 
       {/* Assumptions, Exclusions, Dependencies */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Assumptions */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-2">
+        <GlassCard variant="surface" intensity="subtle" className="p-5 space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[#9298A3]">
               Assumptions
             </h4>
             {!isReadOnly && (
               <button
                 type="button"
                 onClick={() => handleAddArrayItem("assumptions")}
-                className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800"
+                className="text-[11px] font-semibold text-[#D4AF65] hover:text-[#E2C17F]"
               >
                 + Add
               </button>
@@ -277,13 +278,13 @@ export function ProposalContentEditor({
                   onChange={(e) =>
                     handleUpdateArrayItem("assumptions", idx, e.target.value)
                   }
-                  className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded px-2 py-1"
+                  className="w-full text-xs text-[#F5F3ED] bg-[#090A0C]/90 border border-[#292D35] rounded px-2 py-1 focus:outline-none focus:border-[#D4AF65]"
                 />
                 {!isReadOnly && (
                   <button
                     type="button"
                     onClick={() => handleRemoveArrayItem("assumptions", idx)}
-                    className="text-slate-400 hover:text-rose-500 text-xs px-1"
+                    className="text-[#9298A3] hover:text-[#E06C75] text-xs px-1"
                   >
                     &times;
                   </button>
@@ -291,19 +292,19 @@ export function ProposalContentEditor({
               </div>
             ))}
           </div>
-        </div>
+        </GlassCard>
 
         {/* Exclusions */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-2">
+        <GlassCard variant="surface" intensity="subtle" className="p-5 space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[#9298A3]">
               Exclusions
             </h4>
             {!isReadOnly && (
               <button
                 type="button"
                 onClick={() => handleAddArrayItem("exclusions")}
-                className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800"
+                className="text-[11px] font-semibold text-[#D4AF65] hover:text-[#E2C17F]"
               >
                 + Add
               </button>
@@ -319,13 +320,13 @@ export function ProposalContentEditor({
                   onChange={(e) =>
                     handleUpdateArrayItem("exclusions", idx, e.target.value)
                   }
-                  className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded px-2 py-1"
+                  className="w-full text-xs text-[#F5F3ED] bg-[#090A0C]/90 border border-[#292D35] rounded px-2 py-1 focus:outline-none focus:border-[#D4AF65]"
                 />
                 {!isReadOnly && (
                   <button
                     type="button"
                     onClick={() => handleRemoveArrayItem("exclusions", idx)}
-                    className="text-slate-400 hover:text-rose-500 text-xs px-1"
+                    className="text-[#9298A3] hover:text-[#E06C75] text-xs px-1"
                   >
                     &times;
                   </button>
@@ -333,19 +334,19 @@ export function ProposalContentEditor({
               </div>
             ))}
           </div>
-        </div>
+        </GlassCard>
 
         {/* Dependencies */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-2">
+        <GlassCard variant="surface" intensity="subtle" className="p-5 space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[#9298A3]">
               Dependencies
             </h4>
             {!isReadOnly && (
               <button
                 type="button"
                 onClick={() => handleAddArrayItem("dependencies")}
-                className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800"
+                className="text-[11px] font-semibold text-[#D4AF65] hover:text-[#E2C17F]"
               >
                 + Add
               </button>
@@ -361,13 +362,13 @@ export function ProposalContentEditor({
                   onChange={(e) =>
                     handleUpdateArrayItem("dependencies", idx, e.target.value)
                   }
-                  className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded px-2 py-1"
+                  className="w-full text-xs text-[#F5F3ED] bg-[#090A0C]/90 border border-[#292D35] rounded px-2 py-1 focus:outline-none focus:border-[#D4AF65]"
                 />
                 {!isReadOnly && (
                   <button
                     type="button"
                     onClick={() => handleRemoveArrayItem("dependencies", idx)}
-                    className="text-slate-400 hover:text-rose-500 text-xs px-1"
+                    className="text-[#9298A3] hover:text-[#E06C75] text-xs px-1"
                   >
                     &times;
                   </button>
@@ -375,12 +376,12 @@ export function ProposalContentEditor({
               </div>
             ))}
           </div>
-        </div>
+        </GlassCard>
       </div>
 
       {/* Timeline Impact */}
-      <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-2">
-        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+      <GlassCard variant="surface" intensity="subtle" className="p-5 space-y-2">
+        <label className="block text-xs font-semibold uppercase tracking-wider text-[#9298A3]">
           Timeline & Milestone Impact
         </label>
         <input
@@ -389,10 +390,9 @@ export function ProposalContentEditor({
           value={content.timelineImpact}
           onChange={(e) => handleTimelineChange(e.target.value)}
           placeholder="e.g. Estimated +3 to +5 business days added to milestone 2"
-          className="w-full text-xs text-slate-900 bg-slate-50 border border-slate-200 rounded px-3 py-2"
+          className="w-full text-xs text-[#F5F3ED] bg-[#090A0C]/90 border border-[#292D35] rounded px-3 py-2 focus:outline-none focus:border-[#D4AF65]"
         />
-      </div>
+      </GlassCard>
     </div>
   );
 }
-

@@ -3,6 +3,8 @@
 import React, { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { AppShell } from "@/components/layout/AppShell";
+import { GlassCard } from "@/components/ui/GlassCard";
 import { ProposalContentEditor } from "@/components/proposals/ProposalContentEditor";
 import { PricingEditor } from "@/components/proposals/PricingEditor";
 import { ClientShareModal } from "@/components/proposals/ClientShareModal";
@@ -269,30 +271,12 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-500 text-sm">
-        Loading proposal workspace...
-      </div>
-    );
-  }
-
-  if (!proposal) {
-    return (
-      <div className="min-h-screen bg-slate-50 p-8 text-center text-slate-700">
-        <h2 className="text-xl font-bold mb-2">Proposal Not Found</h2>
-        <Link href={`/projects/${projectId}/proposals`} className="text-indigo-600 underline">
-          ← Return to Proposals
-        </Link>
-      </div>
-    );
-  }
-
   const getStatusBadge = () => {
+    if (!proposal) return null;
     switch (proposal.status) {
       case "CLIENT_ACCEPTED":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-600 text-white shadow-sm">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#43B581]/15 text-[#43B581] border border-[#43B581]/30">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
             </svg>
@@ -301,27 +285,27 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
         );
       case "CLIENT_REJECTED":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-600 text-white shadow-sm">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#E06C75]/15 text-[#E06C75] border border-[#E06C75]/30">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
             </svg>
             Rejected by Client
           </span>
         );
       case "SENT_TO_CLIENT":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 border border-indigo-300">
-            <svg className="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#D4AF65]/15 text-[#D4AF65] border border-[#D4AF65]/30">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            Sent to Client (Active Review Link)
+            Sent to Client (Active Link)
           </span>
         );
       case "APPROVED":
       case "PROVIDER_APPROVED":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-            <svg className="w-3.5 h-3.5 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#43B581]/15 text-[#43B581] border border-[#43B581]/30">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
             </svg>
             Approved & Ready to Share
@@ -329,134 +313,211 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
         );
       case "SUPERSEDED":
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#111318] text-[#9298A3] border border-[#292D35]">
             Superseded by Newer Version
           </span>
         );
       case "WITHDRAWN":
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#E06C75]/15 text-[#E06C75] border border-[#E06C75]/30">
             Withdrawn
           </span>
         );
       case "DRAFT":
       default:
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#E5B45C]/15 text-[#E5B45C] border border-[#E5B45C]/30">
             Draft Proposal
           </span>
         );
     }
   };
 
+  if (isLoading) {
+    return (
+      <AppShell
+        breadcrumbs={[
+          { label: "Dashboard", href: "/" },
+          { label: `Project (${projectId.slice(0, 8)}...)`, href: `/projects/${projectId}/baseline` },
+          { label: "Proposals", href: `/projects/${projectId}/proposals` },
+          { label: "Loading..." },
+        ]}
+      >
+        <div className="bg-[#171A20] border border-[#292D35] rounded-xl p-12 text-center text-[#9298A3] text-sm font-mono">
+          Loading proposal workspace...
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (!proposal) {
+    return (
+      <AppShell
+        breadcrumbs={[
+          { label: "Dashboard", href: "/" },
+          { label: `Project (${projectId.slice(0, 8)}...)`, href: `/projects/${projectId}/baseline` },
+          { label: "Proposals", href: `/projects/${projectId}/proposals` },
+          { label: "Not Found" },
+        ]}
+      >
+        <div className="bg-[#171A20] border border-[#292D35] rounded-xl p-12 text-center text-[#F5F3ED] space-y-4">
+          <h2 className="text-xl font-bold">Proposal Not Found</h2>
+          <Link href={`/projects/${projectId}/proposals`} className="text-[#D4AF65] underline hover:text-[#E2C17F]">
+            ← Return to Proposals
+          </Link>
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-16">
-      {/* Top Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link
-              href={`/projects/${projectId}/proposals`}
-              className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors"
+    <AppShell
+      breadcrumbs={[
+        { label: "Dashboard", href: "/" },
+        { label: `Project (${projectId.slice(0, 8)}...)`, href: `/projects/${projectId}/baseline` },
+        { label: "Proposals", href: `/projects/${projectId}/proposals` },
+        { label: `v${proposal.version}` },
+      ]}
+      actions={
+        <div className="flex items-center gap-2 flex-wrap">
+          {proposal.status === "CLIENT_ACCEPTED" && !activeInvoice && (
+            <button
+              type="button"
+              onClick={() => setShowInvoiceModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[#090A0C] bg-[#D4AF65] hover:bg-[#E2C17F] transition-colors shadow-sm"
             >
-              ← Proposals List
-            </Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-xs font-semibold text-slate-600">
-              Proposal <span className="font-bold text-slate-900">v{proposal.version}</span>
-            </span>
-            {getStatusBadge()}
+              <span>💳</span>
+              Create PayPal Invoice
+            </button>
+          )}
+
+          {(isApproved || proposal.status === "SENT_TO_CLIENT") && (
+            <button
+              type="button"
+              onClick={() => setShowShareModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[#090A0C] bg-[#D4AF65] hover:bg-[#E2C17F] transition-colors shadow-sm"
+            >
+              <span>🔗</span>
+              Share with Client
+            </button>
+          )}
+
+          {proposal.reviewTokenHash && !proposal.clientAcceptedAt && !proposal.clientRejectedAt && (
+            <button
+              type="button"
+              disabled={isRevoking}
+              onClick={handleRevokeLink}
+              className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#E06C75] bg-[#E06C75]/10 hover:bg-[#E06C75]/20 border border-[#E06C75]/30 transition-colors"
+            >
+              {isRevoking ? "Revoking..." : "Revoke Link"}
+            </button>
+          )}
+
+          {isApproved && !isEditingApproved && (
+            <button
+              type="button"
+              onClick={() => setIsEditingApproved(true)}
+              className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold text-[#D4AF65] bg-[#D4AF65]/10 border border-[#D4AF65]/30 hover:bg-[#D4AF65]/20 transition-colors"
+            >
+              Edit as New Version (v{proposal.version + 1})
+            </button>
+          )}
+
+          {!isReadOnly && (
+            <>
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={handleSaveDraft}
+                className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold text-[#F5F3ED] bg-[#171A20] hover:text-[#D4AF65] hover:border-[#D4AF65] transition-colors border border-[#292D35] disabled:opacity-50"
+              >
+                {isSaving ? "Saving..." : "Save Draft"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowApprovalModal(true)}
+                className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-bold text-[#090A0C] bg-[#43B581] hover:bg-[#43B581]/90 transition-colors shadow-sm"
+              >
+                Approve Proposal →
+              </button>
+
+              <button
+                type="button"
+                disabled={isWithdrawing}
+                onClick={handleWithdrawProposal}
+                className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#E06C75] hover:bg-[#E06C75]/10 transition-colors"
+              >
+                Withdraw
+              </button>
+            </>
+          )}
+        </div>
+      }
+    >
+      <div className="space-y-6">
+        {/* Workspace Subnavigation Tabs */}
+        <div className="flex items-center gap-2 border-b border-[#292D35] pb-3 overflow-x-auto">
+          <Link
+            href={`/projects/${projectId}/baseline`}
+            className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-[#9298A3] hover:text-[#F5F3ED] hover:bg-[#171A20] transition-colors"
+          >
+            Baseline
+          </Link>
+          <Link
+            href={`/projects/${projectId}/requests`}
+            className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-[#9298A3] hover:text-[#F5F3ED] hover:bg-[#171A20] transition-colors"
+          >
+            Scope Intelligence
+          </Link>
+          <Link
+            href={`/projects/${projectId}/proposals`}
+            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-[#D4AF65] bg-[#D4AF65]/10 border border-[#D4AF65]/30"
+          >
+            Proposals
+          </Link>
+          <Link
+            href={`/projects/${projectId}/timeline`}
+            className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-[#9298A3] hover:text-[#F5F3ED] hover:bg-[#171A20] transition-colors"
+          >
+            Timeline
+          </Link>
+        </div>
+
+        {/* Header Summary */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#292D35] pb-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-extrabold text-[#F5F3ED] tracking-tight">
+                Proposal Workspace <span className="text-[#D4AF65] font-mono">v{proposal.version}</span>
+              </h1>
+              {getStatusBadge()}
+            </div>
+            <p className="text-xs text-[#9298A3]">
+              Review scope deliverables, adjust deterministic pricing, and approve commercial proposals.
+            </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            {proposal.status === "CLIENT_ACCEPTED" && !activeInvoice && (
-              <button
-                type="button"
-                onClick={() => setShowInvoiceModal(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm"
-              >
-                <span>💳</span>
-                Create PayPal Invoice
-              </button>
-            )}
-
-            {(isApproved || proposal.status === "SENT_TO_CLIENT") && (
-              <button
-                type="button"
-                onClick={() => setShowShareModal(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm"
-              >
-                <span>🔗</span>
-                Share with Client
-              </button>
-            )}
-
-            {proposal.reviewTokenHash && !proposal.clientAcceptedAt && !proposal.clientRejectedAt && (
-              <button
-                type="button"
-                disabled={isRevoking}
-                onClick={handleRevokeLink}
-                className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors border border-rose-200"
-              >
-                {isRevoking ? "Revoking..." : "Revoke Link"}
-              </button>
-            )}
-
-            {isApproved && !isEditingApproved && (
-              <button
-                type="button"
-                onClick={() => setIsEditingApproved(true)}
-                className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors border border-indigo-200"
-              >
-                Create New Version to Edit (v{proposal.version + 1})
-              </button>
-            )}
-
-            {!isReadOnly && (
-              <>
-                <button
-                  type="button"
-                  disabled={isSaving}
-                  onClick={handleSaveDraft}
-                  className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors border border-slate-300 disabled:opacity-50"
-                >
-                  {isSaving ? "Saving..." : "Save Draft"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowApprovalModal(true)}
-                  className="inline-flex items-center px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm"
-                >
-                  Approve Proposal →
-                </button>
-
-                <button
-                  type="button"
-                  disabled={isWithdrawing}
-                  onClick={handleWithdrawProposal}
-                  className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
-                >
-                  Withdraw
-                </button>
-              </>
-            )}
+          <div className="text-right">
+            <span className="text-xl font-extrabold font-mono text-[#F5F3ED]">
+              {formatCurrency(Number(proposal.amount), proposal.currency)}
+            </span>
+            <p className="text-[10px] text-[#D4AF65] font-mono uppercase font-bold">
+              {proposal.currency}
+            </p>
           </div>
         </div>
-      </header>
 
-      {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
         {feedbackMsg && (
           <div
             className={`rounded-xl p-4 text-sm font-medium flex items-center justify-between shadow-sm ${
               feedbackMsg.type === "success"
-                ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                : "bg-rose-50 text-rose-800 border border-rose-200"
+                ? "bg-[#43B581]/10 text-[#43B581] border border-[#43B581]/30"
+                : "bg-[#E06C75]/10 text-[#E06C75] border border-[#E06C75]/30"
             }`}
           >
             <span>{feedbackMsg.text}</span>
-            <button onClick={() => setFeedbackMsg(null)} className="text-xs underline ml-4">
+            <button onClick={() => setFeedbackMsg(null)} className="text-xs underline ml-4 hover:text-[#F5F3ED]">
               Dismiss
             </button>
           </div>
@@ -464,23 +525,23 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
 
         {/* Client Decision Banners */}
         {proposal.status === "CLIENT_ACCEPTED" && (
-          <div className="bg-emerald-50 border-2 border-emerald-400 rounded-xl p-6 shadow-sm flex items-start gap-4 text-emerald-950">
-            <div className="p-2 rounded-full bg-emerald-100 text-emerald-700">
+          <GlassCard variant="surface" intensity="prominent" className="border-[#43B581]/30 p-6 shadow-sm flex items-start gap-4 text-[#F5F3ED] bg-[#43B581]/5">
+            <div className="p-2 rounded-lg bg-[#43B581]/20 text-[#43B581] border border-[#43B581]/30">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
               </svg>
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-bold text-emerald-900">
+              <h3 className="text-base font-bold text-[#43B581]">
                 Commercial Agreement Established — Proposal Accepted by Client
               </h3>
-              <p className="text-xs text-emerald-800">
-                Client confirmed acceptance on {new Date(proposal.clientAcceptedAt).toLocaleString()} for{" "}
-                <span className="font-bold">{formatCurrency(Number(proposal.amount), proposal.currency)}</span>.
+              <p className="text-xs text-[#9298A3]">
+                Client confirmed acceptance on <span className="font-mono text-[#F5F3ED]">{new Date(proposal.clientAcceptedAt).toLocaleString()}</span> for{" "}
+                <span className="font-bold font-mono text-[#D4AF65]">{formatCurrency(Number(proposal.amount), proposal.currency)}</span>.
                 This proposal is permanently locked and ready for project fulfillment and invoicing.
               </p>
             </div>
-          </div>
+          </GlassCard>
         )}
 
         {/* PayPal Invoice Section for Accepted Proposals */}
@@ -493,108 +554,108 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
               onInvoiceUpdated={(updated) => setActiveInvoice(updated)}
             />
           ) : (
-            <div className="bg-indigo-50/80 border border-indigo-200 rounded-xl p-5 shadow-sm flex flex-wrap items-center justify-between gap-4 text-indigo-950">
+            <GlassCard variant="gold" intensity="prominent" className="p-5 shadow-lg flex flex-wrap items-center justify-between gap-4 text-[#F5F3ED]">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">💳</span>
-                  <h4 className="text-sm font-bold text-indigo-950">
+                  <h4 className="text-sm font-bold text-[#F5F3ED]">
                     Ready for PayPal Invoicing
                   </h4>
                 </div>
-                <p className="text-xs text-indigo-700">
+                <p className="text-xs text-[#9298A3]">
                   This change proposal has been accepted by the client. Generate and send an itemized PayPal invoice directly to{" "}
-                  <span className="font-semibold">{proposal.project?.clientEmail || "the client"}</span>.
+                  <span className="font-semibold text-[#D4AF65] font-mono">{proposal.project?.clientEmail || "the client"}</span>.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowInvoiceModal(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-[#090A0C] bg-[#D4AF65] hover:bg-[#E2C17F] transition-all shadow-sm shadow-[#D4AF65]/20 active:scale-[0.98]"
               >
                 <span>Create PayPal Invoice →</span>
               </button>
-            </div>
+            </GlassCard>
           )
         )}
 
         {proposal.status === "CLIENT_REJECTED" && (
-          <div className="bg-rose-50 border-2 border-rose-300 rounded-xl p-6 shadow-sm flex items-start gap-4 text-rose-950">
-            <div className="p-2 rounded-full bg-rose-100 text-rose-700">
+          <GlassCard variant="surface" intensity="prominent" className="border-[#E06C75]/30 p-6 shadow-sm flex items-start gap-4 text-[#F5F3ED] bg-[#E06C75]/5">
+            <div className="p-2 rounded-lg bg-[#E06C75]/20 text-[#E06C75] border border-[#E06C75]/30">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-bold text-rose-900">
+              <h3 className="text-base font-bold text-[#E06C75]">
                 Client Rejected This Change Proposal
               </h3>
-              <p className="text-xs text-rose-800">
-                Rejected on {new Date(proposal.clientRejectedAt).toLocaleString()}.
+              <p className="text-xs text-[#9298A3]">
+                Rejected on <span className="font-mono text-[#F5F3ED]">{new Date(proposal.clientRejectedAt).toLocaleString()}</span>.
                 {(proposal.deliverables as any)?.clientDecision?.rejectionReason && (
-                  <span className="block mt-1 bg-white/70 p-2 rounded border border-rose-200 text-rose-900 font-mono">
+                  <span className="block mt-1 bg-[#111318] p-2.5 rounded border border-[#292D35] text-[#F5F3ED] font-mono">
                     Client Feedback: &ldquo;{(proposal.deliverables as any).clientDecision.rejectionReason}&rdquo;
                   </span>
                 )}
               </p>
-              <p className="text-[11px] text-rose-700 pt-1">
-                You may click &ldquo;Create New Version to Edit&rdquo; to prepare a revised proposal addressing the client&apos;s feedback.
+              <p className="text-[11px] text-[#9298A3] pt-1">
+                You may click &ldquo;Edit as New Version&rdquo; to prepare a revised proposal addressing the client&apos;s feedback.
               </p>
             </div>
-          </div>
+          </GlassCard>
         )}
 
         {proposal.status === "SENT_TO_CLIENT" && (
-          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-5 shadow-sm flex items-center justify-between text-indigo-950">
+          <GlassCard variant="surface" intensity="subtle" className="border-[#D4AF65]/30 p-5 shadow-sm flex items-center justify-between text-[#F5F3ED]">
             <div className="space-y-0.5">
-              <p className="font-bold text-sm text-indigo-900">
+              <p className="font-bold text-sm text-[#D4AF65]">
                 Active Client Review Link
               </p>
-              <p className="text-xs text-indigo-700">
+              <p className="text-xs text-[#9298A3]">
                 Awaiting client review.
                 {proposal.reviewTokenExpiresAt && (
-                  <span> Link expires on {new Date(proposal.reviewTokenExpiresAt).toLocaleDateString()}.</span>
+                  <span> Link expires on <span className="font-mono text-[#F5F3ED]">{new Date(proposal.reviewTokenExpiresAt).toLocaleDateString()}</span>.</span>
                 )}
               </p>
             </div>
             <button
               type="button"
               onClick={() => setShowShareModal(true)}
-              className="text-xs font-bold text-indigo-700 bg-white px-3 py-1.5 rounded-lg border border-indigo-200 hover:bg-indigo-50 shadow-sm"
+              className="text-xs font-bold text-[#090A0C] bg-[#D4AF65] hover:bg-[#E2C17F] px-3.5 py-1.5 rounded-lg transition-all shadow-sm active:scale-[0.98]"
             >
               View / Copy Link
             </button>
-          </div>
+          </GlassCard>
         )}
 
         {/* Status Alerts */}
         {isApproved && proposal.status !== "SENT_TO_CLIENT" && proposal.status !== "CLIENT_ACCEPTED" && proposal.status !== "CLIENT_REJECTED" && (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 shadow-sm text-sm text-emerald-900 flex items-center justify-between">
+          <GlassCard variant="surface" intensity="subtle" className="border-[#43B581]/30 p-5 shadow-sm text-sm text-[#F5F3ED] flex items-center justify-between bg-[#43B581]/5">
             <div>
-              <p className="font-bold">Proposal Approved & Locked</p>
-              <p className="text-xs text-emerald-800 mt-0.5">
-                Approved on {new Date(proposal.providerApprovedAt || proposal.updatedAt).toLocaleString()} for{" "}
-                <span className="font-semibold">{formatCurrency(Number(proposal.amount), proposal.currency)}</span>.
+              <p className="font-bold text-[#43B581]">Proposal Approved & Locked</p>
+              <p className="text-xs text-[#9298A3] mt-0.5">
+                Approved on <span className="font-mono text-[#F5F3ED]">{new Date(proposal.providerApprovedAt || proposal.updatedAt).toLocaleString()}</span> for{" "}
+                <span className="font-semibold font-mono text-[#D4AF65]">{formatCurrency(Number(proposal.amount), proposal.currency)}</span>.
                 Approved records cannot be altered. Click &ldquo;Share with Client&rdquo; to generate a review link.
               </p>
             </div>
-          </div>
+          </GlassCard>
         )}
 
         {/* Originating Change Request Card */}
         {proposal.changeRequest && (
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-2">
+          <GlassCard variant="surface" intensity="prominent" className="p-5 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#9298A3]">
                 Originating Client Change Request
               </span>
-              <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-slate-100 text-slate-800">
+              <span className="text-xs px-2.5 py-0.5 rounded-full font-mono font-bold bg-[#111318] text-[#D4AF65] border border-[#292D35]">
                 {proposal.changeRequest.classification}
               </span>
             </div>
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs font-mono text-slate-800">
+            <div className="bg-[#090A0C]/90 border border-[#292D35] rounded-lg p-3 text-xs font-mono text-[#F5F3ED]">
               {proposal.changeRequest.sourceText}
             </div>
-          </div>
+          </GlassCard>
         )}
 
         {/* Content & Deliverables Editor */}
@@ -611,50 +672,50 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
           isReadOnly={isReadOnly}
           onChange={setPricingConfig}
         />
-      </main>
+      </div>
 
       {/* Provider Approval Confirmation Modal */}
       {showApprovalModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-4">
+        <div className="fixed inset-0 bg-[#090A0C]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#171A20] border border-[#292D35] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-full bg-emerald-100 text-emerald-700">
+              <div className="p-2.5 rounded-full bg-[#43B581]/15 text-[#43B581] border border-[#43B581]/30">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-lg font-bold text-slate-900">
+                <h3 className="text-lg font-bold text-[#F5F3ED]">
                   Explicit Provider Approval
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-[#9298A3] font-mono">
                   Proposal Version {proposal.version}
                 </p>
               </div>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs space-y-2 text-slate-700">
+            <div className="bg-[#111318] border border-[#292D35] rounded-xl p-4 text-xs space-y-2 text-[#9298A3]">
               <div className="flex justify-between">
-                <span className="text-slate-500">Proposal Title:</span>
-                <span className="font-semibold text-slate-900">{content.title}</span>
+                <span>Proposal Title:</span>
+                <span className="font-semibold text-[#F5F3ED]">{content.title}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Deliverables Count:</span>
-                <span className="font-semibold text-slate-900">{content.deliverables.length}</span>
+                <span>Deliverables Count:</span>
+                <span className="font-semibold text-[#F5F3ED] font-mono">{content.deliverables.length}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Pricing Model:</span>
-                <span className="font-semibold text-slate-900">{pricingConfig.model}</span>
+                <span>Pricing Model:</span>
+                <span className="font-semibold text-[#F5F3ED] font-mono">{pricingConfig.model}</span>
               </div>
-              <div className="flex justify-between border-t border-slate-200 pt-2 text-sm">
-                <span className="font-bold text-slate-900">Total Commercial Amount:</span>
-                <span className="font-bold text-emerald-700">
+              <div className="flex justify-between border-t border-[#292D35] pt-2 text-sm">
+                <span className="font-bold text-[#F5F3ED]">Total Commercial Amount:</span>
+                <span className="font-bold font-mono text-[#D4AF65]">
                   {formatCurrency(Number(proposal.amount), proposal.currency)}
                 </span>
               </div>
             </div>
 
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-xs text-[#9298A3] leading-relaxed">
               By confirming, you explicitly sign off on this commercial proposal. The record will become immutable and locked against edits. Subsequent modifications will generate a new proposal version.
             </p>
 
@@ -662,7 +723,7 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
               <button
                 type="button"
                 onClick={() => setShowApprovalModal(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-[#9298A3] hover:text-[#F5F3ED] hover:bg-[#1D2129] rounded-lg transition-colors"
               >
                 Cancel
               </button>
@@ -670,7 +731,7 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
                 type="button"
                 disabled={isApproving}
                 onClick={handleApproveProposal}
-                className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm disabled:opacity-50"
+                className="px-4 py-2 text-xs font-bold text-[#090A0C] bg-[#43B581] hover:bg-[#43B581]/90 rounded-lg transition-colors shadow-sm disabled:opacity-50"
               >
                 {isApproving ? "Approving..." : "Yes, Explicitly Approve Proposal"}
               </button>
@@ -710,7 +771,6 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
           });
         }}
       />
-    </div>
+    </AppShell>
   );
 }
-

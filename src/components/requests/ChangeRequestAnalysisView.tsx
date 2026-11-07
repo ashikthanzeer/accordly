@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { GlassCard } from "@/components/ui/GlassCard";
 import type {
   ChangeRequestAnalysisResult,
   ClassificationType,
@@ -51,12 +52,12 @@ export function ChangeRequestAnalysisView({
       case "IN_SCOPE":
         return {
           label: "In Scope",
-          sublabel: "Covered by Confirmed Baseline",
-          bg: "bg-emerald-50 border-emerald-300 text-emerald-800",
-          pill: "bg-emerald-100 text-emerald-800",
+          sublabel: "Covered by Confirmed Baseline Agreement",
+          bg: "bg-[#43B581]/10 border-[#43B581]/30 text-[#43B581]",
+          pill: "bg-[#43B581]/20 text-[#43B581] border-[#43B581]/40",
           icon: (
             <svg
-              className="w-6 h-6 text-emerald-600"
+              className="w-6 h-6 text-[#43B581]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -73,12 +74,12 @@ export function ChangeRequestAnalysisView({
       case "OUT_OF_SCOPE":
         return {
           label: "Out of Scope",
-          sublabel: "Explicitly Excluded or Billable Addition",
-          bg: "bg-rose-50 border-rose-300 text-rose-800",
-          pill: "bg-rose-100 text-rose-800",
+          sublabel: "Explicitly Excluded or Billable Expansion",
+          bg: "bg-[#E06C75]/10 border-[#E06C75]/30 text-[#E06C75]",
+          pill: "bg-[#E06C75]/20 text-[#E06C75] border-[#E06C75]/40",
           icon: (
             <svg
-              className="w-6 h-6 text-rose-600"
+              className="w-6 h-6 text-[#E06C75]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -97,11 +98,11 @@ export function ChangeRequestAnalysisView({
         return {
           label: "Ambiguous Scope",
           sublabel: "Contract Silent or Requires Clarification",
-          bg: "bg-amber-50 border-amber-300 text-amber-800",
-          pill: "bg-amber-100 text-amber-800",
+          bg: "bg-[#E5B45C]/10 border-[#E5B45C]/30 text-[#E5B45C]",
+          pill: "bg-[#E5B45C]/20 text-[#E5B45C] border-[#E5B45C]/40",
           icon: (
             <svg
-              className="w-6 h-6 text-amber-600"
+              className="w-6 h-6 text-[#E5B45C]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -121,12 +122,12 @@ export function ChangeRequestAnalysisView({
   const getConfidenceBadge = (confidence: string) => {
     switch (confidence) {
       case "HIGH":
-        return "bg-slate-100 text-slate-800 border-slate-300";
+        return "bg-[#171A20] text-[#D4AF65] border-[#D4AF65]/30";
       case "MEDIUM":
-        return "bg-slate-100 text-slate-700 border-slate-200";
+        return "bg-[#171A20] text-[#F5F3ED] border-[#292D35]";
       case "LOW":
       default:
-        return "bg-slate-50 text-slate-500 border-slate-200";
+        return "bg-[#111318] text-[#9298A3] border-[#292D35]";
     }
   };
 
@@ -174,13 +175,16 @@ export function ChangeRequestAnalysisView({
     <div className="space-y-6">
       {/* Classification Banner */}
       <div
-        className={`border rounded-xl p-6 ${badge.bg} transition-colors shadow-sm`}
+        className={`border rounded-2xl p-6 ${badge.bg} transition-all backdrop-blur-md relative overflow-hidden shadow-sm`}
       >
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-white/70 shadow-sm">{badge.icon}</div>
+            <div className="p-2.5 rounded-lg bg-[#111318]/80 border border-[#292D35]">
+              {badge.icon}
+            </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xl font-bold tracking-tight">
                   {badge.label}
                 </span>
@@ -191,24 +195,24 @@ export function ChangeRequestAnalysisView({
                 >
                   {analysis.confidence} Confidence
                 </span>
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-medium">
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#111318] text-[#9298A3] border border-[#292D35] font-mono">
                   Baseline v{analysis.baselineVersion}
                 </span>
               </div>
-              <p className="text-sm opacity-90 mt-0.5">{badge.sublabel}</p>
+              <p className="text-sm opacity-90 mt-1">{badge.sublabel}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             {reviewStatus === "REVIEWED" ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-600 text-white shadow-sm">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#43B581]/20 text-[#43B581] border border-[#43B581]/30">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
                 </svg>
                 Reviewed
               </span>
             ) : (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-800">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#1D2129] text-[#9298A3] border border-[#292D35]">
                 Pending Provider Review
               </span>
             )}
@@ -216,51 +220,52 @@ export function ChangeRequestAnalysisView({
         </div>
 
         {/* Executive Summary & Reasoning */}
-        <div className="mt-4 pt-4 border-t border-black/10 space-y-2">
+        <div className="mt-5 pt-4 border-t border-[#292D35]/50 space-y-3">
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider opacity-75 mb-1">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#9298A3] mb-1">
               Intelligence Summary
             </h4>
-            <p className="text-sm leading-relaxed">{analysis.summary}</p>
+            <p className="text-sm leading-relaxed text-[#F5F3ED]">{analysis.summary}</p>
           </div>
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider opacity-75 mb-1">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#9298A3] mb-1">
               Detailed Scope Reasoning
             </h4>
-            <p className="text-sm leading-relaxed opacity-95">{analysis.reasoning}</p>
+            <p className="text-sm leading-relaxed text-[#F5F3ED]/90">{analysis.reasoning}</p>
           </div>
         </div>
       </div>
 
       {/* Client Request Context */}
-      <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+      <GlassCard variant="surface" intensity="subtle" className="p-5">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-[#9298A3] mb-2 flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF65]" />
           Original Client Message
         </h3>
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 text-sm text-slate-800 font-mono whitespace-pre-wrap">
+        <div className="bg-[#090A0C]/90 border border-[#292D35] rounded-lg p-3.5 text-sm text-[#F5F3ED] font-mono whitespace-pre-wrap">
           {sourceText}
         </div>
-      </div>
+      </GlassCard>
 
       {/* Supporting Evidence Cards */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+      <GlassCard variant="surface" intensity="prominent" className="p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-[#292D35] pb-3">
           <div>
-            <h3 className="text-base font-bold text-slate-900">
+            <h3 className="text-base font-bold text-[#F5F3ED]">
               Contractual Evidence & Source Citations
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#9298A3]">
               Clauses retrieved from the signed agreement and confirmed baseline.
             </p>
           </div>
-          <span className="text-xs font-medium text-slate-500">
-            {analysis.supportingEvidence.length} evidence citation
+          <span className="text-xs font-mono text-[#D4AF65]">
+            {analysis.supportingEvidence.length} citation
             {analysis.supportingEvidence.length === 1 ? "" : "s"}
           </span>
         </div>
 
         {analysis.supportingEvidence.length === 0 ? (
-          <p className="text-sm text-slate-500 italic py-2">
+          <p className="text-sm text-[#9298A3] italic py-2">
             No specific contract clauses directly mention this request (silence in agreement).
           </p>
         ) : (
@@ -268,20 +273,20 @@ export function ChangeRequestAnalysisView({
             {analysis.supportingEvidence.map((ev, idx) => (
               <div
                 key={idx}
-                className="border border-slate-200 rounded-lg p-4 bg-slate-50/50 space-y-2 hover:border-slate-300 transition-colors"
+                className="border border-[#292D35] rounded-lg p-4 bg-[#111318]/70 hover:bg-[#111318] space-y-2 hover:border-[#D4AF65]/40 transition-all"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold uppercase px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    <span className="text-[11px] font-bold uppercase px-2 py-0.5 rounded bg-[#D4AF65]/10 text-[#D4AF65] border border-[#D4AF65]/30">
                       {ev.category.replace(/_/g, " ")}
                     </span>
                     {ev.page && (
-                      <span className="text-xs text-slate-600 font-medium">
+                      <span className="text-xs text-[#9298A3] font-medium">
                         Page {ev.page}
                       </span>
                     )}
                     {ev.section && (
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-[#9298A3]">
                         • Section: {ev.section}
                       </span>
                     )}
@@ -289,122 +294,122 @@ export function ChangeRequestAnalysisView({
 
                   <div>
                     {ev.isVerified ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#43B581] bg-[#43B581]/10 border border-[#43B581]/30 px-2 py-0.5 rounded-full">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
                         </svg>
                         Verified in Contract
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#E5B45C] bg-[#E5B45C]/10 border border-[#E5B45C]/30 px-2 py-0.5 rounded-full">
                         Unverified Quote
                       </span>
                     )}
                   </div>
                 </div>
 
-                <blockquote className="border-l-2 border-indigo-400 pl-3 italic text-sm text-slate-700 my-1 bg-white py-1.5 rounded-r">
+                <blockquote className="border-l-2 border-[#D4AF65] pl-3 italic text-sm text-[#F5F3ED] my-1 bg-[#090A0C]/80 py-2 rounded-r">
                   &ldquo;{ev.verbatimExcerpt}&rdquo;
                 </blockquote>
 
-                <p className="text-xs text-slate-600">
-                  <span className="font-semibold text-slate-700">Relevance:</span>{" "}
+                <p className="text-xs text-[#9298A3]">
+                  <span className="font-semibold text-[#F5F3ED]">Relevance:</span>{" "}
                   {ev.relevanceExplanation}
                 </p>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </GlassCard>
 
       {/* Contradicting Evidence (if any) */}
       {analysis.contradictingEvidence &&
         analysis.contradictingEvidence.length > 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 shadow-sm space-y-3">
-            <div className="flex items-center gap-2 text-amber-800 font-bold text-sm">
-              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <GlassCard variant="surface" intensity="subtle" className="border-[#E5B45C]/30 p-5 space-y-3 bg-[#E5B45C]/5">
+            <div className="flex items-center gap-2 text-[#E5B45C] font-bold text-sm">
+              <svg className="w-5 h-5 text-[#E5B45C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
               <span>Potential Contract Conflicts Detected</span>
             </div>
             <div className="space-y-2">
               {analysis.contradictingEvidence.map((ce, idx) => (
-                <div key={idx} className="bg-white border border-amber-200 rounded-lg p-3 text-xs text-slate-700">
+                <div key={idx} className="bg-[#171A20] border border-[#E5B45C]/30 rounded-lg p-3 text-xs text-[#F5F3ED]">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-bold text-amber-900">{ce.category}</span>
-                    {ce.page && <span>Page {ce.page}</span>}
-                    {ce.section && <span>• {ce.section}</span>}
+                    <span className="font-bold text-[#E5B45C]">{ce.category}</span>
+                    {ce.page && <span className="text-[#9298A3]">Page {ce.page}</span>}
+                    {ce.section && <span className="text-[#9298A3]">• {ce.section}</span>}
                   </div>
-                  <p className="text-slate-600 mb-1">
-                    <span className="font-medium">Conflict:</span> {ce.relevanceExplanation}
+                  <p className="text-[#9298A3] mb-1">
+                    <span className="font-medium text-[#F5F3ED]">Conflict:</span> {ce.relevanceExplanation}
                   </p>
-                  <blockquote className="italic border-l-2 border-amber-400 pl-2 text-slate-600">
+                  <blockquote className="italic border-l-2 border-[#E5B45C] pl-2 text-[#9298A3] bg-[#090A0C] py-1">
                     &ldquo;{ce.verbatimExcerpt}&rdquo;
                   </blockquote>
                 </div>
               ))}
             </div>
-          </div>
+          </GlassCard>
         )}
 
       {/* Clarification & Client Questions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Missing Information */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-slate-400" />
+        <GlassCard variant="surface" intensity="subtle" className="p-5">
+          <h3 className="text-sm font-bold text-[#F5F3ED] mb-2 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#9298A3]" />
             Missing Information
           </h3>
           {analysis.missingInformation.length === 0 ? (
-            <p className="text-xs text-slate-500 italic">None identified.</p>
+            <p className="text-xs text-[#9298A3] italic">None identified.</p>
           ) : (
-            <ul className="list-disc list-inside space-y-1 text-xs text-slate-700">
+            <ul className="list-disc list-inside space-y-1 text-xs text-[#9298A3]">
               {analysis.missingInformation.map((item, idx) => (
-                <li key={idx}>{item}</li>
+                <li key={idx} className="text-[#F5F3ED]/90">{item}</li>
               ))}
             </ul>
           )}
-        </div>
+        </GlassCard>
 
         {/* Clarification Questions for Client */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-indigo-500" />
+        <GlassCard variant="surface" intensity="subtle" className="p-5">
+          <h3 className="text-sm font-bold text-[#F5F3ED] mb-2 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#D4AF65]" />
             Recommended Client Clarification Questions
           </h3>
           {analysis.clarificationQuestions.length === 0 ? (
-            <p className="text-xs text-slate-500 italic">No clarification questions needed.</p>
+            <p className="text-xs text-[#9298A3] italic">No clarification questions needed.</p>
           ) : (
-            <ul className="list-disc list-inside space-y-1 text-xs text-slate-700">
+            <ul className="list-disc list-inside space-y-1.5 text-xs text-[#9298A3]">
               {analysis.clarificationQuestions.map((q, idx) => (
-                <li key={idx} className="leading-relaxed">
+                <li key={idx} className="leading-relaxed text-[#F5F3ED]/90">
                   {q}
                 </li>
               ))}
             </ul>
           )}
-        </div>
+        </GlassCard>
       </div>
 
       {/* Provider Review Sign-off & Internal Notes */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4">
-        <div className="border-b border-slate-100 pb-3">
-          <h3 className="text-base font-bold text-slate-900">
+      <GlassCard variant="surface" intensity="prominent" className="p-6 space-y-4">
+        <div className="border-b border-[#292D35] pb-3">
+          <h3 className="text-base font-bold text-[#F5F3ED]">
             Provider Review & Sign-Off
           </h3>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[#9298A3]">
             Confirm your assessment of this change request and record internal notes before creating a change order.
           </p>
         </div>
 
         {saveSuccess && (
-          <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg p-3 text-sm flex items-center gap-2">
-            <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-[#43B581]/10 border border-[#43B581]/30 text-[#43B581] rounded-lg p-3 text-sm flex items-center gap-2">
+            <svg className="w-4 h-4 text-[#43B581]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
             </svg>
             Review sign-off saved successfully.
             {reviewedAt && (
-              <span className="text-xs text-emerald-700 ml-auto">
+              <span className="text-xs font-mono text-[#43B581]/80 ml-auto">
                 {new Date(reviewedAt).toLocaleString()}
               </span>
             )}
@@ -412,7 +417,7 @@ export function ChangeRequestAnalysisView({
         )}
 
         {saveError && (
-          <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-sm">
+          <div className="bg-[#E06C75]/10 border border-[#E06C75]/30 text-[#E06C75] rounded-lg p-3 text-sm">
             {saveError}
           </div>
         )}
@@ -420,7 +425,7 @@ export function ChangeRequestAnalysisView({
         <div>
           <label
             htmlFor="providerNotes"
-            className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1"
+            className="block text-xs font-semibold uppercase tracking-wider text-[#9298A3] mb-1"
           >
             Internal Provider Notes (Optional)
           </label>
@@ -430,16 +435,16 @@ export function ChangeRequestAnalysisView({
             value={providerNotes}
             onChange={(e) => setProviderNotes(e.target.value)}
             placeholder="Add internal notes on client communication, commercial impact, or rationale..."
-            className="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full rounded-lg bg-[#090A0C]/90 border border-[#292D35] px-3.5 py-2 text-sm text-[#F5F3ED] placeholder-[#9298A3]/50 focus:outline-none focus:border-[#D4AF65]"
           />
         </div>
 
         <div className="flex items-center justify-between pt-2">
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-[#9298A3]">
             {reviewStatus === "REVIEWED" && reviewedAt ? (
-              <span>Last reviewed: {new Date(reviewedAt).toLocaleString()}</span>
+              <span>Last reviewed: <span className="text-[#F5F3ED] font-mono">{new Date(reviewedAt).toLocaleString()}</span></span>
             ) : (
-              <span>Status: Awaiting provider sign-off</span>
+              <span>Status: <span className="text-[#E5B45C]">Awaiting provider sign-off</span></span>
             )}
           </div>
 
@@ -447,53 +452,53 @@ export function ChangeRequestAnalysisView({
             type="button"
             disabled={isSaving}
             onClick={handleSaveReview}
-            className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 transition-colors shadow-sm"
+            className="inline-flex items-center px-4 py-2 rounded-lg text-xs font-bold text-[#F5F3ED] bg-[#1D2129] border border-[#292D35] hover:border-[#D4AF65] hover:text-[#D4AF65] focus:outline-none disabled:opacity-50 transition-all active:scale-[0.98]"
           >
             {isSaving ? "Saving Sign-off..." : "Mark as Reviewed"}
           </button>
         </div>
-      </div>
+      </GlassCard>
 
       {/* Commercial Decision & Change Proposal Generation */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-900/50 rounded-xl p-6 text-white shadow-md space-y-4">
+      <GlassCard variant="gold" intensity="prominent" className="p-6 text-[#F5F3ED] space-y-4 shadow-xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+            <h3 className="text-base font-bold text-[#F5F3ED] flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#D4AF65]" />
               Commercial Action: Change Proposal & Pricing
             </h3>
-            <p className="text-xs text-slate-300 mt-0.5">
+            <p className="text-xs text-[#9298A3] mt-0.5">
               Turn this analyzed change request into a structured, priced commercial proposal.
             </p>
           </div>
 
-          <span className="text-xs font-semibold px-2.5 py-1 rounded bg-white/10 text-slate-200">
+          <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-[#111318] text-[#D4AF65] border border-[#292D35]">
             Status: {analysis.classification}
           </span>
         </div>
 
         {proposalError && (
-          <div className="bg-rose-950/80 border border-rose-500/50 text-rose-200 rounded-lg p-3 text-xs">
+          <div className="bg-[#E06C75]/10 border border-[#E06C75]/30 text-[#E06C75] rounded-lg p-3 text-xs">
             {proposalError}
           </div>
         )}
 
         {/* IN_SCOPE Guardrail */}
         {analysis.classification === "IN_SCOPE" && !allowInScopeOverride && (
-          <div className="bg-amber-950/40 border border-amber-500/40 rounded-lg p-3.5 text-xs text-amber-200 space-y-2">
-            <p className="font-semibold text-amber-100">
+          <div className="bg-[#E5B45C]/10 border border-[#E5B45C]/30 rounded-lg p-3.5 text-xs text-[#E5B45C] space-y-2">
+            <p className="font-semibold text-[#E5B45C]">
               In-Scope Protection Active:
             </p>
-            <p>
+            <p className="text-[#F5F3ED]/80">
               This request was classified as IN_SCOPE (already included in the signed contract baseline).
               Accordly blocks automatic billable proposal creation to protect client trust and prevent double billing.
             </p>
-            <label className="flex items-center gap-2 text-slate-300 cursor-pointer pt-1">
+            <label className="flex items-center gap-2 text-[#9298A3] cursor-pointer pt-1 hover:text-[#F5F3ED]">
               <input
                 type="checkbox"
                 checked={allowInScopeOverride}
                 onChange={(e) => setAllowInScopeOverride(e.target.checked)}
-                className="rounded border-slate-700 text-indigo-500 focus:ring-indigo-400"
+                className="rounded bg-[#090A0C] border-[#292D35] text-[#D4AF65] focus:ring-[#D4AF65]"
               />
               <span>Allow provider override (e.g. for a zero-cost scope clarification)</span>
             </label>
@@ -502,11 +507,11 @@ export function ChangeRequestAnalysisView({
 
         {/* AMBIGUOUS Commercial Justification */}
         {analysis.classification === "AMBIGUOUS" && (
-          <div className="bg-slate-800/80 border border-slate-700 rounded-lg p-3.5 space-y-2 text-xs">
-            <label className="block font-semibold text-slate-200">
+          <div className="bg-[#111318]/80 border border-[#292D35] rounded-lg p-3.5 space-y-2 text-xs">
+            <label className="block font-semibold text-[#F5F3ED]">
               Provider Commercial Justification Required (Minimum 10 chars):
             </label>
-            <p className="text-slate-400">
+            <p className="text-[#9298A3]">
               The baseline agreement is silent or ambiguous on this work. Explain why this work warrants a paid change proposal:
             </p>
             <input
@@ -514,13 +519,13 @@ export function ChangeRequestAnalysisView({
               value={commercialJustification}
               onChange={(e) => setCommercialJustification(e.target.value)}
               placeholder="e.g. Chatbot requires external third-party API and custom dataset embeddings not contemplated in initial agreement."
-              className="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              className="w-full bg-[#090A0C] border border-[#292D35] rounded px-3 py-2 text-[#F5F3ED] placeholder-[#9298A3]/50 text-xs focus:outline-none focus:border-[#D4AF65]"
             />
           </div>
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-          <p className="text-[11px] text-slate-400 max-w-lg">
+          <p className="text-[11px] text-[#9298A3] max-w-lg">
             Generating a proposal will launch the interactive pricing workspace where you can review AI deliverables, edit hours and rates, and explicitly approve the proposal.
           </p>
 
@@ -555,11 +560,11 @@ export function ChangeRequestAnalysisView({
                 setIsCreatingProposal(false);
               }
             }}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold text-[#090A0C] bg-[#D4AF65] hover:bg-[#E2C17F] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm shadow-[#D4AF65]/20 hover:shadow-[#D4AF65]/35 active:scale-[0.98]"
           >
             {isCreatingProposal ? (
               <>
-                <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin h-3.5 w-3.5 text-[#090A0C]" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
@@ -570,7 +575,7 @@ export function ChangeRequestAnalysisView({
             )}
           </button>
         </div>
-      </div>
+      </GlassCard>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Accordly — Scope to Cash",
-  description: "AI-assisted commercial workflow from scope change to verified payment",
+  description: "From agreement to payment, seamlessly.",
 };
 
 export default function RootLayout({
@@ -12,11 +12,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased min-h-screen bg-slate-50 text-slate-900">
+    <html lang="en" className="dark">
+      <body className="antialiased min-h-screen bg-[#090A0C] text-[#F5F3ED]">
         {children}
       </body>
     </html>
   );
 }
-

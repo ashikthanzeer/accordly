@@ -100,21 +100,23 @@ export function InvoiceReviewModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-6 my-8">
+    <div className="fixed inset-0 bg-[#090A0C]/80 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-[#171A20]/95 backdrop-blur-xl border border-white/10 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-6 my-8 relative overflow-hidden">
+        {/* Top inner specular sheen */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="flex items-center justify-between border-b border-[#292D35] pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg">
+            <div className="w-10 h-10 rounded-xl bg-[#D4AF65]/10 border border-[#D4AF65]/30 flex items-center justify-center text-[#D4AF65] font-bold text-lg shadow-sm">
               💳
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">
+              <h3 className="text-base font-bold text-[#F5F3ED]">
                 Review PayPal Invoice
               </h3>
-              <p className="text-xs text-slate-500">
-                Review client details and itemized pricing before sending to PayPal
-                Sandbox.
+              <p className="text-xs text-[#9298A3]">
+                Review client details and itemized pricing before dispatching to PayPal Sandbox.
               </p>
             </div>
           </div>
@@ -122,7 +124,7 @@ export function InvoiceReviewModal({
             type="button"
             onClick={onClose}
             disabled={isSending}
-            className="text-slate-400 hover:text-slate-600 text-lg p-1"
+            className="text-[#9298A3] hover:text-[#F5F3ED] text-lg p-1 transition-colors"
           >
             ✕
           </button>
@@ -130,7 +132,7 @@ export function InvoiceReviewModal({
 
         {/* Loading state */}
         {isLoadingPreview && (
-          <div className="py-12 text-center text-slate-500 text-sm space-y-2">
+          <div className="py-12 text-center text-[#9298A3] text-sm space-y-2">
             <div className="inline-block animate-spin text-2xl">⏳</div>
             <p>Preparing PayPal commercial preview...</p>
           </div>
@@ -138,7 +140,7 @@ export function InvoiceReviewModal({
 
         {/* Error message */}
         {error && (
-          <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 space-y-1">
+          <div className="p-3.5 bg-[#E06C75]/10 border border-[#E06C75]/30 rounded-xl text-xs text-[#E06C75] space-y-1">
             <p className="font-semibold">Unable to proceed</p>
             <p>{error}</p>
           </div>
@@ -146,59 +148,59 @@ export function InvoiceReviewModal({
 
         {/* Invoice Preview Details */}
         {!isLoadingPreview && preview && (
-          <div className="space-y-5 text-slate-800 text-xs">
+          <div className="space-y-5 text-[#F5F3ED] text-xs">
             {/* Recipient & Project Summary */}
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-[#111318] border border-[#292D35] rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                <span className="text-[10px] uppercase font-bold text-[#9298A3] tracking-wider">
                   Client Recipient
                 </span>
-                <p className="text-sm font-semibold text-slate-900 mt-0.5">
+                <p className="text-sm font-semibold text-[#F5F3ED] mt-0.5">
                   {preview.recipientName || "Client"}
                 </p>
-                <p className="text-xs text-indigo-600 font-medium">
+                <p className="text-xs text-[#D4AF65] font-mono mt-0.5">
                   {preview.recipientEmail}
                 </p>
               </div>
 
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                <span className="text-[10px] uppercase font-bold text-[#9298A3] tracking-wider">
                   Payment Destination
                 </span>
-                <p className="text-sm font-semibold text-slate-900 mt-0.5">
+                <p className="text-sm font-semibold text-[#F5F3ED] mt-0.5">
                   PayPal Sandbox Environment
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-[#9298A3]">
                   Instant email delivery & hosted payment link
                 </p>
               </div>
             </div>
 
             {/* Itemized Deliverables */}
-            <div className="border border-slate-200 rounded-xl overflow-hidden">
-              <div className="bg-slate-100 px-4 py-2 font-bold text-[11px] text-slate-700 flex justify-between">
+            <div className="border border-[#292D35] rounded-xl overflow-hidden">
+              <div className="bg-[#111318] px-4 py-2 font-bold text-[11px] text-[#9298A3] flex justify-between uppercase tracking-wider">
                 <span>Deliverable / Line Item</span>
                 <span>Subtotal ({preview.currency})</span>
               </div>
-              <div className="divide-y divide-slate-100 max-h-48 overflow-y-auto">
+              <div className="divide-y divide-[#292D35] max-h-48 overflow-y-auto">
                 {preview.lineItems.map((item, idx) => (
                   <div
                     key={idx}
-                    className="p-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                    className="p-3.5 flex items-center justify-between hover:bg-[#1D2129] transition-colors"
                   >
                     <div className="space-y-0.5 max-w-[75%]">
-                      <p className="font-semibold text-slate-900">{item.name}</p>
+                      <p className="font-semibold text-[#F5F3ED]">{item.name}</p>
                       {item.description && item.description !== item.name && (
-                        <p className="text-[11px] text-slate-500 truncate">
+                        <p className="text-[11px] text-[#9298A3] truncate">
                           {item.description}
                         </p>
                       )}
-                      <p className="text-[10px] text-slate-400">
+                      <p className="text-[10px] text-[#9298A3] font-mono">
                         Qty: {item.quantity} × {item.currency} {item.unitAmount}
                       </p>
                     </div>
                     <div className="text-right">
-                      <span className="font-bold text-slate-900">
+                      <span className="font-bold font-mono text-[#D4AF65]">
                         {item.currency} {item.formattedSubtotal}
                       </span>
                     </div>
@@ -207,11 +209,11 @@ export function InvoiceReviewModal({
               </div>
 
               {/* Total Row */}
-              <div className="bg-slate-50 border-t border-slate-200 px-4 py-3 flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-700">
+              <div className="bg-[#111318] border-t border-[#292D35] px-4 py-3 flex items-center justify-between">
+                <span className="text-xs font-bold text-[#9298A3]">
                   Total Due:
                 </span>
-                <span className="text-sm font-black text-indigo-600">
+                <span className="text-base font-black font-mono text-[#F5F3ED]">
                   {preview.currency} {preview.totalAmount}
                 </span>
               </div>
@@ -219,7 +221,7 @@ export function InvoiceReviewModal({
 
             {/* Note field */}
             <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-slate-700">
+              <label className="text-[11px] font-semibold text-[#9298A3]">
                 Invoice Note to Client (optional)
               </label>
               <textarea
@@ -227,7 +229,7 @@ export function InvoiceReviewModal({
                 onChange={(e) => setNote(e.target.value)}
                 rows={2}
                 disabled={isSending}
-                className="w-full text-xs p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none text-slate-900"
+                className="w-full text-xs p-2.5 rounded-lg bg-[#090A0C] border border-[#292D35] focus:outline-none focus:border-[#D4AF65] resize-none text-[#F5F3ED] placeholder-[#9298A3]/50"
                 placeholder="Add a friendly note or payment reference..."
               />
             </div>
@@ -235,12 +237,12 @@ export function InvoiceReviewModal({
         )}
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#292D35]">
           <button
             type="button"
             onClick={onClose}
             disabled={isSending}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-[#9298A3] hover:text-[#F5F3ED] hover:bg-[#1D2129] transition-colors"
           >
             Cancel
           </button>
@@ -249,7 +251,7 @@ export function InvoiceReviewModal({
             type="button"
             onClick={handleConfirmAndSend}
             disabled={isLoadingPreview || isSending || !preview}
-            className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+            className="px-5 py-2 rounded-xl text-xs font-bold text-[#090A0C] bg-[#D4AF65] hover:bg-[#E2C17F] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
           >
             {isSending ? (
               <>
@@ -265,4 +267,3 @@ export function InvoiceReviewModal({
     </div>
   );
 }
-

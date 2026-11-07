@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import type { RecentActivityItem } from "@/lib/dashboard/types";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 interface RecentActivityFeedProps {
   activity: RecentActivityItem[];
@@ -11,9 +12,9 @@ interface RecentActivityFeedProps {
 export function RecentActivityFeed({ activity }: RecentActivityFeedProps) {
   if (activity.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm text-center text-slate-500 text-xs">
+      <GlassCard intensity="subtle" className="p-6 text-center text-[#9298A3] text-xs">
         No recent activity logged yet.
-      </div>
+      </GlassCard>
     );
   }
 
@@ -21,26 +22,26 @@ export function RecentActivityFeed({ activity }: RecentActivityFeedProps) {
     switch (actorType) {
       case "PAYPAL":
         return (
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-800">
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#3B82F6]/15 text-[#60A5FA] border border-[#3B82F6]/30 font-mono">
             PAYPAL
           </span>
         );
       case "CLIENT":
         return (
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#43B581]/15 text-[#43B581] border border-[#43B581]/30">
             CLIENT
           </span>
         );
       case "PROVIDER":
         return (
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#D4AF65]/15 text-[#D4AF65] border border-[#D4AF65]/30">
             PROVIDER
           </span>
         );
       case "SYSTEM":
       default:
         return (
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/[0.04] text-[#9298A3] border border-white/[0.08]">
             SYSTEM
           </span>
         );
@@ -48,34 +49,36 @@ export function RecentActivityFeed({ activity }: RecentActivityFeedProps) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 className="text-sm font-bold text-slate-900">Recent Activity</h3>
-        <span className="text-[10px] text-slate-400">Live Event Feed</span>
+    <GlassCard intensity="subtle" className="p-5 space-y-4">
+      <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+        <h3 className="text-sm font-bold text-[#F5F3ED]">Recent Activity</h3>
+        <span className="text-[10px] text-[#D4AF65] font-semibold flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF65] animate-pulse" />
+          Live Event Feed
+        </span>
       </div>
 
-      <div className="divide-y divide-slate-100 max-h-[480px] overflow-y-auto pr-1 space-y-2">
+      <div className="divide-y divide-white/[0.06] max-h-[480px] overflow-y-auto pr-1 space-y-2">
         {activity.map((item) => (
-          <div key={item.id} className="pt-2 pb-2 text-xs space-y-1">
+          <div key={item.id} className="pt-2.5 pb-2.5 text-xs space-y-1.5 hover:bg-white/[0.02] rounded-lg px-1.5 transition-colors">
             <div className="flex items-center justify-between text-[11px]">
               <div className="flex items-center gap-1.5">
                 {getActorBadge(item.actorType)}
                 <Link
                   href={`/projects/${item.projectId}/timeline`}
-                  className="font-bold text-slate-800 hover:text-indigo-600 truncate max-w-[150px]"
+                  className="font-bold text-[#F5F3ED] hover:text-[#D4AF65] transition-colors truncate max-w-[150px]"
                 >
                   {item.projectName}
                 </Link>
               </div>
-              <span className="text-[10px] text-slate-400">{item.formattedTime}</span>
+              <span className="text-[10px] text-[#9298A3] font-mono">{item.formattedTime}</span>
             </div>
-            <p className="text-slate-600 text-[11px] leading-relaxed">
+            <p className="text-[#9298A3] text-[11px] leading-relaxed">
               {item.description}
             </p>
           </div>
         ))}
       </div>
-    </div>
+    </GlassCard>
   );
 }
-

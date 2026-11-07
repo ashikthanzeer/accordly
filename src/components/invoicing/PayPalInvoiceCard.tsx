@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { GlassCard } from "@/components/ui/GlassCard";
 import { formatCurrency } from "@/lib/pricing/calculator";
 
 interface PayPalInvoiceCardProps {
@@ -86,7 +87,7 @@ export function PayPalInvoiceCard({
     switch (s) {
       case "PAID":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-600 text-white shadow-sm">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#43B581]/15 text-[#43B581] border border-[#43B581]/30">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
             </svg>
@@ -95,7 +96,7 @@ export function PayPalInvoiceCard({
         );
       case "PARTIALLY_PAID":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500 text-white shadow-sm">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#E5B45C]/15 text-[#E5B45C] border border-[#E5B45C]/30">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -106,7 +107,7 @@ export function PayPalInvoiceCard({
       case "UNPAID":
       case "PAYMENT_PENDING":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-600 text-white shadow-sm">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#D4AF65]/15 text-[#D4AF65] border border-[#D4AF65]/30">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -115,20 +116,20 @@ export function PayPalInvoiceCard({
         );
       case "CANCELLED":
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#E06C75]/15 text-[#E06C75] border border-[#E06C75]/30">
             CANCELLED
           </span>
         );
       case "REFUNDED":
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-300">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#111318] text-[#9298A3] border border-[#292D35]">
             REFUNDED
           </span>
         );
       case "DRAFT":
       default:
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border border-slate-300">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#111318] text-[#9298A3] border border-[#292D35]">
             DRAFT
           </span>
         );
@@ -136,24 +137,24 @@ export function PayPalInvoiceCard({
   };
 
   return (
-    <div className="bg-white border-2 border-indigo-200 rounded-2xl p-6 shadow-sm space-y-5">
+    <GlassCard variant="gold" intensity="prominent" tilt={false} className="p-6 shadow-xl space-y-5">
       {/* Top Banner Row */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#292D35] pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 font-black text-sm">
+          <div className="w-10 h-10 rounded-xl bg-[#D4AF65]/10 border border-[#D4AF65]/30 flex items-center justify-center text-[#D4AF65] font-black text-sm shadow-sm">
             PP
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-slate-900">
+              <h3 className="text-sm font-bold text-[#F5F3ED]">
                 PayPal Sandbox Invoice
               </h3>
-              <span className="text-[10px] uppercase font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
+              <span className="text-[10px] uppercase font-semibold text-[#D4AF65] bg-[#D4AF65]/10 border border-[#D4AF65]/20 px-2 py-0.5 rounded">
                 Authoritative State
               </span>
             </div>
-            <p className="text-xs text-slate-500 font-mono mt-0.5">
-              Invoice ID: <span className="font-semibold text-slate-800">{invoice.paypalInvoiceId}</span>
+            <p className="text-xs text-[#9298A3] font-mono mt-0.5">
+              Invoice ID: <span className="font-semibold text-[#F5F3ED]">{invoice.paypalInvoiceId}</span>
             </p>
           </div>
         </div>
@@ -163,38 +164,38 @@ export function PayPalInvoiceCard({
 
       {/* Main Financial Metrics Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 pt-1">
-        <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-100">
-          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+        <div className="bg-[#111318]/80 rounded-xl p-3.5 border border-[#292D35]">
+          <span className="text-[10px] uppercase font-bold text-[#9298A3] tracking-wider">
             Total Billed
           </span>
-          <p className="text-sm font-black text-slate-900 mt-0.5">
+          <p className="text-sm font-black font-mono text-[#F5F3ED] mt-0.5">
             {formatCurrency(totalAmountNum, invoice.currency)}
           </p>
         </div>
 
-        <div className="bg-emerald-50/60 rounded-xl p-3.5 border border-emerald-100">
-          <span className="text-[10px] uppercase font-bold text-emerald-600 tracking-wider">
+        <div className="bg-[#111318]/80 rounded-xl p-3.5 border border-[#292D35]">
+          <span className="text-[10px] uppercase font-bold text-[#43B581] tracking-wider">
             Amount Paid
           </span>
-          <p className="text-sm font-black text-emerald-700 mt-0.5">
+          <p className="text-sm font-black font-mono text-[#43B581] mt-0.5">
             {formatCurrency(paidAmountNum, invoice.currency)}
           </p>
         </div>
 
-        <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-100">
-          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+        <div className="bg-[#111318]/80 rounded-xl p-3.5 border border-[#292D35]">
+          <span className="text-[10px] uppercase font-bold text-[#9298A3] tracking-wider">
             Balance Due
           </span>
-          <p className={`text-sm font-black mt-0.5 ${dueAmountNum > 0 ? "text-slate-900" : "text-emerald-700"}`}>
+          <p className={`text-sm font-black font-mono mt-0.5 ${dueAmountNum > 0 ? "text-[#E5B45C]" : "text-[#43B581]"}`}>
             {formatCurrency(dueAmountNum, invoice.currency)}
           </p>
         </div>
 
-        <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-100">
-          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+        <div className="bg-[#111318]/80 rounded-xl p-3.5 border border-[#292D35]">
+          <span className="text-[10px] uppercase font-bold text-[#9298A3] tracking-wider">
             Reconciled At
           </span>
-          <p className="text-xs font-semibold text-slate-800 mt-1">
+          <p className="text-xs font-semibold font-mono text-[#F5F3ED] mt-1">
             {invoice.lastReconciledAt
               ? new Date(invoice.lastReconciledAt).toLocaleTimeString()
               : "Just now"}
@@ -207,8 +208,8 @@ export function PayPalInvoiceCard({
         <div
           className={`text-xs p-3 rounded-xl border ${
             feedback.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-              : "bg-rose-50 text-rose-800 border-rose-200"
+              ? "bg-[#43B581]/10 text-[#43B581] border border-[#43B581]/30"
+              : "bg-[#E06C75]/10 text-[#E06C75] border border-[#E06C75]/30"
           }`}
         >
           {feedback.text}
@@ -221,7 +222,7 @@ export function PayPalInvoiceCard({
           type="button"
           onClick={handleReconcile}
           disabled={isReconciling}
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors border border-slate-300 disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-[#F5F3ED] bg-[#111318]/90 hover:text-[#D4AF65] hover:border-[#D4AF65]/40 transition-all border border-[#292D35] disabled:opacity-50 active:scale-[0.98]"
         >
           {isReconciling ? (
             <>
@@ -230,7 +231,7 @@ export function PayPalInvoiceCard({
             </>
           ) : (
             <>
-              <svg className="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 text-[#D4AF65]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
               Refresh Payment Status
@@ -243,7 +244,7 @@ export function PayPalInvoiceCard({
             href={invoice.hostedInvoiceUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-[#090A0C] bg-[#D4AF65] hover:bg-[#E2C17F] shadow-sm shadow-[#D4AF65]/20 hover:shadow-[#D4AF65]/35 transition-all active:scale-[0.98]"
           >
             <span>View on PayPal</span>
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -252,6 +253,6 @@ export function PayPalInvoiceCard({
           </a>
         )}
       </div>
-    </div>
+    </GlassCard>
   );
 }

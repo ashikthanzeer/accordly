@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 export interface UploadedDocument {
   id: string;
@@ -61,7 +62,7 @@ export function DocumentUpload({ projectId, onUploadSuccess }: DocumentUploadPro
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      setErrorMessage("File exceeds maximum allowed size of 10 MB.");
+      setErrorMessage("File exceeds the maximum 10 MB size limit.");
       return;
     }
 
@@ -84,7 +85,6 @@ export function DocumentUpload({ projectId, onUploadSuccess }: DocumentUploadPro
       });
 
       const data = await res.json();
-
       if (!res.ok) {
         throw new Error(data.error || "Upload failed.");
       }
@@ -101,21 +101,23 @@ export function DocumentUpload({ projectId, onUploadSuccess }: DocumentUploadPro
   const handleLoadSampleAgreement = async () => {
     setIsLoading(true);
     setErrorMessage(null);
+    setSuccessInfo(null);
 
     const sampleAgreementText = `
-# SERVICE AGREEMENT: E-COMMERCE & CLIENT PORTAL REDESIGN
-Effective Date: November 10, 2026
-Between: Digital Craft Studio ("Provider") and Acme Corp ("Client")
+# MASTER SERVICES AGREEMENT & STATEMENT OF WORK
+Client: Acme Digital Corp
+Provider: Accordly Engineering
+Effective Date: November 1, 2026
 
-1. SCOPE OF WORK & DELIVERABLES
-Provider agrees to deliver:
-- DEL-1: High-fidelity desktop and mobile website templates in React & Tailwind CSS.
-- DEL-2: PayPal Sandbox checkout and invoicing workflow integration.
-- DEL-3: Client review portal with versioned document confirmation.
+1. IN-SCOPE DELIVERABLES
+- Deliverable 1: Modern responsive web portal built with Next.js and Tailwind CSS.
+- Deliverable 2: RESTful API for inventory management with PostgreSQL database.
+- Deliverable 3: User authentication system supporting standard email/password authentication.
 
-2. EXCLUSIONS
-- Custom video production and 3D animation assets are explicitly excluded.
-- Content writing and product copywriting are excluded; client provides all final copy.
+2. SPECIFIC OUT-OF-SCOPE EXCLUSIONS
+- Exclusion A: Mobile applications for iOS and Android native platforms.
+- Exclusion B: Legacy ERP system data migration or custom enterprise connectors.
+- Exclusion C: Third-party SAML 2.0 or enterprise SSO identity provider integration (e.g., Okta, Ping, Azure AD).
 
 3. REVISION LIMITS
 - Includes up to two (2) consolidated rounds of feedback and design revisions per deliverable.
@@ -161,11 +163,11 @@ Provider agrees to deliver:
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
+    <GlassCard intensity="prominent" className="p-6 space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Upload Project Agreement</h2>
-          <p className="text-sm text-slate-500">
+          <h2 className="text-base font-bold text-[#F5F3ED]">Upload Project Agreement</h2>
+          <p className="text-xs text-[#9298A3]">
             Upload the signed contract, statement of work, or agreement (PDF, TXT, MD up to 10MB).
           </p>
         </div>
@@ -173,22 +175,22 @@ Provider agrees to deliver:
           type="button"
           onClick={handleLoadSampleAgreement}
           disabled={isLoading}
-          className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-1.5 px-3 rounded border border-slate-300 transition"
+          className="text-xs bg-white/[0.04] hover:bg-white/[0.08] text-[#D4AF65] hover:text-[#E2C17F] font-semibold py-1.5 px-3 rounded-xl border border-white/[0.08] transition-all shadow-sm active:scale-95"
         >
           Load Demo Agreement
         </button>
       </div>
 
-      {/* Drag & Drop Area */}
+      {/* Drag & Drop Area with Frosted Glass Surface */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${
+        className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${
           isDragging
-            ? "border-blue-500 bg-blue-50"
-            : "border-slate-300 hover:border-slate-400 bg-slate-50"
+            ? "border-[#D4AF65] bg-[#D4AF65]/10 shadow-[0_0_24px_rgba(212,175,101,0.2)]"
+            : "border-white/[0.08] hover:border-[#D4AF65]/40 bg-white/[0.02] hover:bg-white/[0.04]"
         }`}
       >
         <input
@@ -199,7 +201,7 @@ Provider agrees to deliver:
           className="hidden"
         />
         <svg
-          className="mx-auto h-12 w-12 text-slate-400"
+          className="mx-auto h-12 w-12 text-[#9298A3]"
           stroke="currentColor"
           fill="none"
           viewBox="0 0 48 48"
@@ -219,31 +221,31 @@ Provider agrees to deliver:
           />
         </svg>
 
-        <p className="mt-2 text-sm font-medium text-slate-700">
+        <p className="mt-3 text-sm font-medium text-[#F5F3ED]">
           {selectedFile ? (
-            <span className="text-blue-600 font-semibold">{selectedFile.name}</span>
+            <span className="text-[#D4AF65] font-semibold font-mono">{selectedFile.name}</span>
           ) : (
             <>
-              <span className="text-blue-600 hover:underline">Click to upload</span> or drag and drop
+              <span className="text-[#D4AF65] hover:underline font-semibold">Click to upload</span> or drag and drop
             </>
           )}
         </p>
-        <p className="text-xs text-slate-500 mt-1">
+        <p className="text-xs text-[#9298A3] mt-1">
           PDF, Plain Text, or Markdown (Max 10 MB)
         </p>
       </div>
 
       {errorMessage && (
-        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+        <div className="p-3.5 bg-[#E06C75]/15 border border-[#E06C75]/30 rounded-xl text-xs text-[#E06C75] shadow-sm">
           <strong>Error:</strong> {errorMessage}
         </div>
       )}
 
       {selectedFile && !successInfo && (
-        <div className="mt-4 flex items-center justify-between bg-slate-50 p-3 rounded border border-slate-200">
-          <div className="text-sm">
-            <span className="font-medium text-slate-800">{selectedFile.name}</span>{" "}
-            <span className="text-slate-500">
+        <div className="flex items-center justify-between bg-white/[0.03] p-3.5 rounded-xl border border-white/[0.08]">
+          <div className="text-xs text-[#F5F3ED]">
+            <span className="font-semibold text-[#F5F3ED] font-mono">{selectedFile.name}</span>{" "}
+            <span className="text-[#9298A3] font-mono">
               ({(selectedFile.size / 1024).toFixed(1)} KB)
             </span>
           </div>
@@ -251,7 +253,7 @@ Provider agrees to deliver:
             type="button"
             onClick={handleUpload}
             disabled={isLoading}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-1.5 px-4 rounded transition disabled:opacity-50"
+            className="bg-[#D4AF65] hover:bg-[#E2C17F] hover:shadow-[0_0_16px_rgba(212,175,101,0.35)] text-[#090A0C] text-xs font-bold py-1.5 px-4 rounded-xl transition-all disabled:opacity-50 shadow-sm active:scale-95"
           >
             {isLoading ? "Extracting Text..." : "Upload & Extract Text"}
           </button>
@@ -259,9 +261,9 @@ Provider agrees to deliver:
       )}
 
       {successInfo && (
-        <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
-          <div className="flex items-center text-emerald-800 font-medium text-sm">
-            <svg className="w-5 h-5 mr-2 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+        <div className="p-4 bg-[#43B581]/10 border border-[#43B581]/30 rounded-xl space-y-2 shadow-sm">
+          <div className="flex items-center text-[#43B581] font-semibold text-xs">
+            <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
               <path
                 fillRule="evenodd"
                 d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -270,20 +272,22 @@ Provider agrees to deliver:
             </svg>
             Agreement uploaded and text extracted successfully!
           </div>
-          <div className="mt-2 text-xs text-emerald-700 grid grid-cols-3 gap-2">
+          <div className="text-xs text-[#9298A3] grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 border-t border-[#43B581]/20">
             <div>
-              <strong>File:</strong> {successInfo.fileName}
+              <strong className="text-[#F5F3ED]">File:</strong>{" "}
+              <span className="font-mono text-[#F5F3ED]">{successInfo.fileName}</span>
             </div>
             <div>
-              <strong>Sections/Pages:</strong> {successInfo.totalPages}
+              <strong className="text-[#F5F3ED]">Sections:</strong>{" "}
+              <span className="font-mono text-[#F5F3ED]">{successInfo.totalPages}</span>
             </div>
             <div>
-              <strong>Characters:</strong> {successInfo.totalCharacters}
+              <strong className="text-[#F5F3ED]">Characters:</strong>{" "}
+              <span className="font-mono text-[#F5F3ED]">{successInfo.totalCharacters}</span>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </GlassCard>
   );
 }
-

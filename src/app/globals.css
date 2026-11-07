@@ -3,12 +3,224 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 15, 23, 42;
-  --background-rgb: 255, 255, 255;
+  --background: #090A0C;
+  --background-secondary: #111318;
+  --surface: #171A20;
+  --surface-hover: #1D2129;
+
+  --primary: #D4AF65;
+  --primary-hover: #E2C17F;
+  --primary-muted: #A98746;
+
+  --foreground: #F5F3ED;
+  --muted-foreground: #9298A3;
+
+  --border: #292D35;
+  --border-subtle: #1F232B;
+
+  --success: #43B581;
+  --success-surface: rgba(67, 181, 129, 0.12);
+  --warning: #E5B45C;
+  --warning-surface: rgba(229, 180, 92, 0.12);
+  --danger: #E06C75;
+  --danger-surface: rgba(224, 108, 117, 0.12);
+
+  /* Liquid Glass Design Tokens */
+  --glass-bg: rgba(23, 26, 32, 0.72);
+  --glass-bg-hover: rgba(29, 33, 41, 0.82);
+  --glass-bg-subtle: rgba(17, 19, 24, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-hover: rgba(255, 255, 255, 0.16);
+  --glass-border-gold: rgba(212, 175, 101, 0.28);
+  --glass-blur: 16px;
+  --glass-inner-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.06);
+
+  --gold: #D4AF65;
+  --gold-glow: rgba(212, 175, 101, 0.18);
+  --gold-specular: radial-gradient(350px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(212, 175, 101, 0.12), transparent 80%);
+
+  --mouse-x: 50%;
+  --mouse-y: 50%;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
+  color: var(--foreground);
+  background: var(--background);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  overflow-x: hidden;
 }
 
+/* Custom scrollbars for dark theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #090A0C;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #292D35;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3B424E;
+}
+
+/* Restrained Gold Accent Utilities */
+.gold-glow {
+  box-shadow: 0 0 24px -4px rgba(212, 175, 101, 0.22);
+}
+
+.gold-border-glow {
+  border-color: rgba(212, 175, 101, 0.35);
+  box-shadow: 0 0 16px -2px rgba(212, 175, 101, 0.16);
+}
+
+/* Liquid Glass Panels */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-inner-shadow);
+}
+
+.glass-panel-subtle {
+  background: var(--glass-bg-subtle);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-inner-shadow);
+}
+
+/* Interactive Glass Cards with Specular Highlights */
+.glass-card-interactive {
+  position: relative;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-inner-shadow);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s ease,
+              background-color 0.25s ease,
+              box-shadow 0.25s ease;
+  overflow: hidden;
+}
+
+.glass-card-interactive::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(212, 175, 101, 0.12), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.glass-card-interactive:hover {
+  transform: translateY(-2px);
+  border-color: var(--glass-border-gold);
+  background: var(--glass-bg-hover);
+  box-shadow: var(--glass-inner-shadow), 0 12px 30px -10px rgba(0, 0, 0, 0.6), 0 0 20px -5px rgba(212, 175, 101, 0.15);
+}
+
+.glass-card-interactive:hover::before {
+  opacity: 1;
+}
+
+/* Ambient Drifting Keyframe Animations */
+@keyframes ambientDriftA {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(40px, -60px) scale(1.08);
+  }
+  66% {
+    transform: translate(-30px, 40px) scale(0.95);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+@keyframes ambientDriftB {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(-50px, 40px) scale(0.92);
+  }
+  66% {
+    transform: translate(35px, -35px) scale(1.05);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+@keyframes particleFloat {
+  0% {
+    transform: translateY(0px) translateX(0px);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translateY(-25px) translateX(15px);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(0px) translateX(0px);
+    opacity: 0.25;
+  }
+}
+
+.animate-ambient-a {
+  animation: ambientDriftA 28s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-ambient-b {
+  animation: ambientDriftB 34s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-particle-slow {
+  animation: particleFloat 14s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Accessibility: Fallback for environments lacking backdrop-filter */
+@supports not (backdrop-filter: blur(10px)) {
+  .glass-panel,
+  .glass-panel-subtle,
+  .glass-card-interactive {
+    background: #171A20 !important;
+  }
+}
+
+/* Accessibility: Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .glass-card-interactive:hover {
+    transform: none !important;
+  }
+
+  .animate-ambient-a,
+  .animate-ambient-b,
+  .animate-particle-slow {
+    animation: none !important;
+  }
+}

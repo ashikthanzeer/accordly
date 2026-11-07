@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, use } from "react";
+import { AmbientBackground } from "@/components/ui/AmbientBackground";
+import { GlassCard } from "@/components/ui/GlassCard";
 import type { PublicProposalSnapshot } from "@/lib/proposals/serializer";
 
 interface PageProps {
@@ -99,26 +101,29 @@ export default function ClientReviewPage({ params }: PageProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-sm text-slate-500">
-        Loading client review portal...
+      <div className="min-h-screen bg-[#090A0C] flex items-center justify-center p-6 text-sm text-[#9298A3] font-mono">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 mx-auto border-2 border-[#D4AF65] border-t-transparent rounded-full animate-spin" />
+          <p>Loading client review portal...</p>
+        </div>
       </div>
     );
   }
 
   if (isExpired || errorMsg || !proposal) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-        <div className="bg-white border border-slate-200 rounded-2xl p-8 max-w-md w-full text-center space-y-4 shadow-sm">
-          <div className="w-12 h-12 mx-auto rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-xl font-bold">
+      <div className="min-h-screen bg-[#090A0C] flex items-center justify-center p-6">
+        <div className="bg-[#171A20] border border-[#292D35] rounded-2xl p-8 max-w-md w-full text-center space-y-4 shadow-xl">
+          <div className="w-12 h-12 mx-auto rounded-full bg-[#E06C75]/15 text-[#E06C75] flex items-center justify-center text-xl font-bold border border-[#E06C75]/30">
             !
           </div>
-          <h2 className="text-lg font-bold text-slate-900">
+          <h2 className="text-lg font-bold text-[#F5F3ED]">
             {isExpired ? "Review Link Expired" : "Proposal Link Inactive"}
           </h2>
-          <p className="text-xs text-slate-600 leading-relaxed">
+          <p className="text-xs text-[#9298A3] leading-relaxed">
             {errorMsg || "This proposal review link is invalid, expired, or was revoked by the service provider."}
           </p>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-[#9298A3]/70">
             Please contact your service provider directly to request an updated proposal link.
           </p>
         </div>
@@ -131,131 +136,136 @@ export default function ClientReviewPage({ params }: PageProps) {
   const isRejected = proposal.status === "CLIENT_REJECTED";
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 pb-20">
+    <div className="min-h-screen bg-[#090A0C] text-[#F5F3ED] pb-20 relative overflow-hidden">
+      {/* Viewport Ambient Motion & Specular Particles */}
+      <AmbientBackground />
+
       {/* Brand Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
+      <header className="bg-[#111318]/80 border-b border-white/[0.08] sticky top-0 z-20 backdrop-blur-md">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-black text-xs shadow-sm">
-              A
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#D4AF65] to-[#A98746] flex items-center justify-center shadow-lg shadow-[#D4AF65]/10">
+              <span className="text-[#090A0C] font-black text-sm tracking-tighter">A</span>
             </div>
-            <span className="text-sm font-extrabold text-slate-900 tracking-tight">
-              Accordly
-            </span>
-            <span className="text-slate-300">|</span>
-            <span className="text-xs font-semibold text-slate-500">
-              Client Proposal Portal
-            </span>
+            <div>
+              <span className="text-sm font-extrabold text-[#F5F3ED] tracking-tight">
+                Accordly
+              </span>
+              <span className="mx-2 text-[#292D35]">|</span>
+              <span className="text-xs font-semibold text-[#D4AF65]">
+                Client Proposal Portal
+              </span>
+            </div>
           </div>
 
           <div className="text-right">
-            <span className="text-xs font-semibold text-slate-700 block">
+            <span className="text-xs font-semibold text-[#F5F3ED] block">
               {proposal.projectName}
             </span>
-            <span className="text-[11px] text-slate-400">
-              Prepared for {proposal.clientName}
+            <span className="text-[11px] text-[#9298A3]">
+              Prepared for <span className="text-[#F5F3ED]">{proposal.clientName}</span>
             </span>
           </div>
         </div>
       </header>
 
       {/* Main Proposal Document Body */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-8 space-y-6">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-8 space-y-6 relative z-10">
         {feedbackSuccess && (
-          <div className="bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-xl p-4 text-sm font-semibold shadow-sm">
+          <div className="bg-[#43B581]/15 border border-[#43B581]/40 text-[#43B581] rounded-xl p-4 text-sm font-semibold shadow-sm backdrop-blur-sm">
             {feedbackSuccess}
           </div>
         )}
 
         {/* Decision Banner if already decided */}
         {isAccepted && (
-          <div className="bg-emerald-600 text-white rounded-xl p-5 shadow-sm flex items-center gap-3">
-            <div className="p-2 rounded-full bg-white/20">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <GlassCard variant="surface" intensity="prominent" className="border-[#43B581]/40 text-[#F5F3ED] p-5 shadow-sm flex items-center gap-3 bg-[#43B581]/5">
+            <div className="p-2 rounded-lg bg-[#43B581]/20 text-[#43B581] border border-[#43B581]/30">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
               </svg>
             </div>
             <div>
-              <h2 className="text-sm font-bold">Proposal Accepted</h2>
-              <p className="text-xs opacity-90">
-                You accepted this proposal on {new Date(proposal.clientAcceptedAt!).toLocaleString()}.
+              <h2 className="text-sm font-bold text-[#43B581]">Proposal Accepted</h2>
+              <p className="text-xs text-[#9298A3]">
+                You accepted this proposal on <span className="text-[#F5F3ED] font-mono">{new Date(proposal.clientAcceptedAt!).toLocaleString()}</span>.
                 Work is authorized under the terms specified below.
               </p>
             </div>
-          </div>
+          </GlassCard>
         )}
 
         {isRejected && (
-          <div className="bg-rose-600 text-white rounded-xl p-5 shadow-sm flex items-center gap-3">
-            <div className="p-2 rounded-full bg-white/20">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <GlassCard variant="surface" intensity="prominent" className="border-[#E06C75]/40 text-[#F5F3ED] p-5 shadow-sm flex items-center gap-3 bg-[#E06C75]/5">
+            <div className="p-2 rounded-lg bg-[#E06C75]/20 text-[#E06C75] border border-[#E06C75]/30">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
             <div>
-              <h2 className="text-sm font-bold">Proposal Declined</h2>
-              <p className="text-xs opacity-90">
-                You declined this proposal on {new Date(proposal.clientRejectedAt!).toLocaleString()}.
+              <h2 className="text-sm font-bold text-[#E06C75]">Proposal Declined</h2>
+              <p className="text-xs text-[#9298A3]">
+                You declined this proposal on <span className="text-[#F5F3ED] font-mono">{new Date(proposal.clientRejectedAt!).toLocaleString()}</span>.
                 {proposal.rejectionReason && (
-                  <span className="block mt-1 font-mono text-[11px]">
+                  <span className="block mt-1 font-mono text-[11px] bg-[#111318]/90 p-2 rounded border border-[#292D35] text-[#F5F3ED]">
                     Feedback: &ldquo;{proposal.rejectionReason}&rdquo;
                   </span>
                 )}
               </p>
             </div>
-          </div>
+          </GlassCard>
         )}
 
         {/* Proposal Header Card */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+        <GlassCard variant="surface" intensity="prominent" className="p-6 sm:p-8 space-y-4 shadow-xl">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#292D35] pb-4">
             <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#D4AF65] bg-[#D4AF65]/10 border border-[#D4AF65]/30 px-2.5 py-1 rounded-full">
                 Change Proposal v{proposal.version}
               </span>
-              <h1 className="text-2xl font-extrabold text-slate-900 mt-2 tracking-tight">
+              <h1 className="text-2xl font-extrabold text-[#F5F3ED] mt-2 tracking-tight">
                 {proposal.title}
               </h1>
             </div>
 
             <div className="text-right">
-              <span className="text-2xl font-black text-slate-900 block">
+              <span className="text-2xl font-black font-mono text-[#F5F3ED] block">
                 {proposal.pricing.formattedTotal}
               </span>
-              <span className="text-[10px] text-slate-400 font-semibold uppercase">
+              <span className="text-[10px] text-[#D4AF65] font-semibold uppercase font-mono">
                 {proposal.pricing.currency} &bull; {proposal.pricing.model}
               </span>
             </div>
           </div>
 
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#9298A3] mb-1">
               Summary of Proposed Work
             </h3>
-            <p className="text-sm text-slate-700 leading-relaxed">
+            <p className="text-sm text-[#F5F3ED] leading-relaxed">
               {proposal.description}
             </p>
           </div>
 
           {proposal.reasonForChange && (
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+            <div className="bg-[#111318]/80 border border-[#292D35] rounded-xl p-4">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#9298A3] mb-1">
                 Reason for Scope Modification
               </h4>
-              <p className="text-xs text-slate-700">
+              <p className="text-xs text-[#F5F3ED]">
                 {proposal.reasonForChange}
               </p>
             </div>
           )}
-        </div>
+        </GlassCard>
 
         {/* Deliverables Section */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-4">
-          <div className="border-b border-slate-100 pb-3">
-            <h2 className="text-base font-bold text-slate-900">
+        <GlassCard variant="surface" intensity="prominent" className="p-6 sm:p-8 space-y-4 shadow-xl">
+          <div className="border-b border-[#292D35] pb-3">
+            <h2 className="text-base font-bold text-[#F5F3ED]">
               Proposed Deliverables ({proposal.deliverables.length})
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#9298A3]">
               Work items and acceptance standards included in this proposal.
             </p>
           </div>
@@ -264,31 +274,31 @@ export default function ClientReviewPage({ params }: PageProps) {
             {proposal.deliverables.map((deliv, idx) => (
               <div
                 key={deliv.id || idx}
-                className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-2.5"
+                className="border border-[#292D35] rounded-xl p-4 bg-[#111318]/70 hover:bg-[#111318] space-y-2.5 transition-colors"
               >
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-slate-900">
+                  <h3 className="text-sm font-bold text-[#F5F3ED]">
                     {deliv.name}
                   </h3>
                   {deliv.suggestedEffortHours && (
-                    <span className="text-xs font-medium text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                    <span className="text-xs font-mono font-medium text-[#9298A3] bg-[#090A0C]/80 px-2 py-0.5 rounded border border-[#292D35]">
                       Est. Effort: {deliv.suggestedEffortHours} hrs
                     </span>
                   )}
                 </div>
 
-                <p className="text-xs text-slate-700 leading-relaxed">
+                <p className="text-xs text-[#F5F3ED]/90 leading-relaxed">
                   {deliv.description}
                 </p>
 
                 {deliv.acceptanceCriteria.length > 0 && (
                   <div className="pt-1">
-                    <span className="text-[11px] font-bold uppercase text-slate-500 block mb-1">
+                    <span className="text-[11px] font-bold uppercase text-[#9298A3] block mb-1">
                       Acceptance Criteria:
                     </span>
-                    <ul className="list-disc list-inside space-y-0.5 text-xs text-slate-600">
+                    <ul className="list-disc list-inside space-y-0.5 text-xs text-[#9298A3]">
                       {deliv.acceptanceCriteria.map((crit, cIdx) => (
-                        <li key={cIdx}>{crit}</li>
+                        <li key={cIdx} className="text-[#F5F3ED]/80">{crit}</li>
                       ))}
                     </ul>
                   </div>
@@ -296,22 +306,22 @@ export default function ClientReviewPage({ params }: PageProps) {
               </div>
             ))}
           </div>
-        </div>
+        </GlassCard>
 
         {/* Commercial Pricing Breakdown */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-4">
-          <div className="border-b border-slate-100 pb-3">
-            <h2 className="text-base font-bold text-slate-900">
+        <GlassCard variant="surface" intensity="prominent" className="p-6 sm:p-8 space-y-4 shadow-xl">
+          <div className="border-b border-[#292D35] pb-3">
+            <h2 className="text-base font-bold text-[#F5F3ED]">
               Commercial Pricing Breakdown
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#9298A3]">
               Itemized calculation matching agreed commercial terms.
             </p>
           </div>
 
           {proposal.pricing.lineItems.length > 0 && (
-            <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
-              <div className="bg-slate-50 px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-500 grid grid-cols-12 gap-2">
+            <div className="divide-y divide-[#292D35] border border-[#292D35] rounded-xl overflow-hidden bg-[#171A20]/60 backdrop-blur-sm">
+              <div className="bg-[#111318]/90 px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-[#9298A3] grid grid-cols-12 gap-2 border-b border-[#292D35]">
                 <span className="col-span-6">Description</span>
                 <span className="col-span-2 text-right">Qty/Hours</span>
                 <span className="col-span-2 text-right">Unit Price</span>
@@ -320,16 +330,16 @@ export default function ClientReviewPage({ params }: PageProps) {
               {proposal.pricing.lineItems.map((item, idx) => (
                 <div
                   key={item.id || idx}
-                  className="px-4 py-2.5 grid grid-cols-12 gap-2 text-xs text-slate-800 items-center bg-white"
+                  className="px-4 py-2.5 grid grid-cols-12 gap-2 text-xs text-[#F5F3ED] items-center hover:bg-[#1D2129]/60 transition-colors"
                 >
                   <span className="col-span-6 font-medium">{item.description}</span>
-                  <span className="col-span-2 text-right text-slate-600">
+                  <span className="col-span-2 text-right font-mono text-[#9298A3]">
                     {item.quantity}
                   </span>
-                  <span className="col-span-2 text-right text-slate-600">
+                  <span className="col-span-2 text-right font-mono text-[#9298A3]">
                     ${item.unitPrice.toFixed(2)}
                   </span>
-                  <span className="col-span-2 text-right font-bold text-slate-900">
+                  <span className="col-span-2 text-right font-mono font-bold text-[#D4AF65]">
                     ${item.subtotal.toFixed(2)}
                   </span>
                 </div>
@@ -337,91 +347,91 @@ export default function ClientReviewPage({ params }: PageProps) {
             </div>
           )}
 
-          <div className="bg-slate-900 text-white rounded-xl p-5 flex items-center justify-between">
+          <div className="bg-[#111318]/90 border border-[#D4AF65]/30 rounded-xl p-5 flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
+              <span className="text-xs text-[#9298A3] uppercase tracking-wider font-semibold">
                 Total Amount Due ({proposal.pricing.currency})
               </span>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                Pricing model: {proposal.pricing.model}
+              <p className="text-[11px] text-[#9298A3] mt-0.5">
+                Pricing model: <span className="font-semibold text-[#F5F3ED]">{proposal.pricing.model}</span>
               </p>
             </div>
-            <span className="text-2xl font-black text-white">
+            <span className="text-2xl font-black font-mono text-[#F5F3ED]">
               {proposal.pricing.formattedTotal}
             </span>
           </div>
-        </div>
+        </GlassCard>
 
         {/* Assumptions, Exclusions & Timeline Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Assumptions & Exclusions */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+          <GlassCard variant="surface" intensity="subtle" className="p-6 space-y-4 shadow-xl">
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#9298A3] mb-1.5">
                 Assumptions
               </h3>
               {proposal.assumptions.length === 0 ? (
-                <p className="text-xs text-slate-400 italic">None specified.</p>
+                <p className="text-xs text-[#9298A3]/60 italic">None specified.</p>
               ) : (
-                <ul className="list-disc list-inside space-y-1 text-xs text-slate-600">
+                <ul className="list-disc list-inside space-y-1 text-xs text-[#9298A3]">
                   {proposal.assumptions.map((a, idx) => (
-                    <li key={idx}>{a}</li>
+                    <li key={idx} className="text-[#F5F3ED]/90">{a}</li>
                   ))}
                 </ul>
               )}
             </div>
 
-            <div className="border-t border-slate-100 pt-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+            <div className="border-t border-[#292D35] pt-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#9298A3] mb-1.5">
                 Exclusions (Not Included)
               </h3>
               {proposal.exclusions.length === 0 ? (
-                <p className="text-xs text-slate-400 italic">None specified.</p>
+                <p className="text-xs text-[#9298A3]/60 italic">None specified.</p>
               ) : (
-                <ul className="list-disc list-inside space-y-1 text-xs text-slate-600">
+                <ul className="list-disc list-inside space-y-1 text-xs text-[#9298A3]">
                   {proposal.exclusions.map((e, idx) => (
-                    <li key={idx}>{e}</li>
+                    <li key={idx} className="text-[#F5F3ED]/90">{e}</li>
                   ))}
                 </ul>
               )}
             </div>
-          </div>
+          </GlassCard>
 
           {/* Timeline & Dependencies */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+          <GlassCard variant="surface" intensity="subtle" className="p-6 space-y-4 shadow-xl">
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#9298A3] mb-1.5">
                 Timeline & Schedule Impact
               </h3>
-              <p className="text-xs text-slate-700">
+              <p className="text-xs text-[#F5F3ED]">
                 {proposal.timelineImpact || "No schedule adjustment specified."}
               </p>
             </div>
 
-            <div className="border-t border-slate-100 pt-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+            <div className="border-t border-[#292D35] pt-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#9298A3] mb-1.5">
                 Client Dependencies
               </h3>
               {proposal.dependencies.length === 0 ? (
-                <p className="text-xs text-slate-400 italic">None specified.</p>
+                <p className="text-xs text-[#9298A3]/60 italic">None specified.</p>
               ) : (
-                <ul className="list-disc list-inside space-y-1 text-xs text-slate-600">
+                <ul className="list-disc list-inside space-y-1 text-xs text-[#9298A3]">
                   {proposal.dependencies.map((d, idx) => (
-                    <li key={idx}>{d}</li>
+                    <li key={idx} className="text-[#F5F3ED]/90">{d}</li>
                   ))}
                 </ul>
               )}
             </div>
-          </div>
+          </GlassCard>
         </div>
 
         {/* Decision Section (Visible if not decided) */}
         {!isDecided && (
-          <div className="bg-white border-2 border-indigo-200 rounded-2xl p-6 sm:p-8 shadow-md text-center space-y-4">
-            <h2 className="text-lg font-extrabold text-slate-900">
+          <GlassCard variant="gold" intensity="prominent" className="p-6 sm:p-8 shadow-2xl text-center space-y-4">
+            <h2 className="text-lg font-extrabold text-[#F5F3ED]">
               Ready to Confirm This Proposal?
             </h2>
-            <p className="text-xs text-slate-600 max-w-lg mx-auto leading-relaxed">
+            <p className="text-xs text-[#9298A3] max-w-lg mx-auto leading-relaxed">
               Accepting this change proposal authorizes the service provider to proceed with the specified deliverables at the stated price.
             </p>
 
@@ -429,49 +439,49 @@ export default function ClientReviewPage({ params }: PageProps) {
               <button
                 type="button"
                 onClick={() => setShowRejectModal(true)}
-                className="px-6 py-2.5 rounded-xl text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors"
+                className="px-6 py-2.5 rounded-xl text-xs font-bold text-[#E06C75] bg-[#E06C75]/10 hover:bg-[#E06C75]/20 border border-[#E06C75]/30 transition-all hover:scale-[1.01] active:scale-[0.98]"
               >
                 Decline / Request Changes
               </button>
               <button
                 type="button"
                 onClick={() => setShowAcceptModal(true)}
-                className="px-8 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md transition-colors"
+                className="px-8 py-2.5 rounded-xl text-xs font-bold text-[#090A0C] bg-[#D4AF65] hover:bg-[#E2C17F] shadow-lg shadow-[#D4AF65]/25 hover:shadow-[#D4AF65]/40 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 Accept Proposal ({proposal.pricing.formattedTotal}) &rarr;
               </button>
             </div>
 
             {proposal.expiresAt && (
-              <p className="text-[11px] text-slate-400 pt-1">
+              <p className="text-[11px] text-[#9298A3] font-mono pt-1">
                 Link expires on {new Date(proposal.expiresAt).toLocaleDateString()}.
               </p>
             )}
-          </div>
+          </GlassCard>
         )}
       </main>
 
       {/* Accept Confirmation Modal */}
       {showAcceptModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <h3 className="text-base font-bold text-slate-900">
+        <div className="fixed inset-0 bg-[#090A0C]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#171A20] border border-[#292D35] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-bold text-[#F5F3ED]">
               Confirm Proposal Acceptance
             </h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              You are accepting <span className="font-semibold text-slate-900">&ldquo;{proposal.title}&rdquo;</span> (v{proposal.version}) for a total of{" "}
-              <span className="font-bold text-emerald-700">{proposal.pricing.formattedTotal}</span>.
+            <p className="text-xs text-[#9298A3] leading-relaxed">
+              You are accepting <span className="font-semibold text-[#F5F3ED]">&ldquo;{proposal.title}&rdquo;</span> (v{proposal.version}) for a total of{" "}
+              <span className="font-bold font-mono text-[#D4AF65]">{proposal.pricing.formattedTotal}</span>.
             </p>
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-[11px] text-slate-600 space-y-1">
-              <p>&bull; Deliverables: {proposal.deliverables.length} work items</p>
-              <p>&bull; Currency: {proposal.pricing.currency}</p>
+            <div className="bg-[#111318] border border-[#292D35] rounded-lg p-3 text-[11px] text-[#9298A3] space-y-1">
+              <p>&bull; Deliverables: <span className="text-[#F5F3ED]">{proposal.deliverables.length} work items</span></p>
+              <p>&bull; Currency: <span className="text-[#D4AF65] font-mono">{proposal.pricing.currency}</span></p>
               <p>&bull; Confirmation will be permanently recorded in project records.</p>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setShowAcceptModal(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+                className="px-4 py-2 text-xs font-semibold text-[#9298A3] hover:text-[#F5F3ED] hover:bg-[#1D2129] rounded-lg"
               >
                 Cancel
               </button>
@@ -479,7 +489,7 @@ export default function ClientReviewPage({ params }: PageProps) {
                 type="button"
                 disabled={isSubmitting}
                 onClick={handleAccept}
-                className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm disabled:opacity-50"
+                className="px-5 py-2 text-xs font-bold text-[#090A0C] bg-[#D4AF65] hover:bg-[#E2C17F] rounded-lg transition-colors shadow-sm disabled:opacity-50"
               >
                 {isSubmitting ? "Accepting..." : "Confirm & Accept Proposal"}
               </button>
@@ -490,12 +500,12 @@ export default function ClientReviewPage({ params }: PageProps) {
 
       {/* Reject Modal */}
       {showRejectModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <h3 className="text-base font-bold text-slate-900">
+        <div className="fixed inset-0 bg-[#090A0C]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#171A20] border border-[#292D35] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-bold text-[#F5F3ED]">
               Decline Change Proposal
             </h3>
-            <p className="text-xs text-slate-600">
+            <p className="text-xs text-[#9298A3]">
               Please provide optional feedback on why you are declining or what terms you would like changed:
             </p>
             <textarea
@@ -503,13 +513,13 @@ export default function ClientReviewPage({ params }: PageProps) {
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
               placeholder="e.g. Price exceeds our Q4 budget; would prefer to remove 3D assets to reduce cost..."
-              className="w-full text-xs text-slate-800 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-rose-500"
+              className="w-full text-xs text-[#F5F3ED] bg-[#090A0C] border border-[#292D35] rounded-lg p-3 focus:outline-none focus:border-[#E06C75] placeholder-[#9298A3]/50"
             />
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setShowRejectModal(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+                className="px-4 py-2 text-xs font-semibold text-[#9298A3] hover:text-[#F5F3ED] hover:bg-[#1D2129] rounded-lg"
               >
                 Cancel
               </button>
@@ -517,7 +527,7 @@ export default function ClientReviewPage({ params }: PageProps) {
                 type="button"
                 disabled={isSubmitting}
                 onClick={handleReject}
-                className="px-5 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors shadow-sm disabled:opacity-50"
+                className="px-5 py-2 text-xs font-bold text-white bg-[#E06C75] hover:bg-[#E06C75]/90 rounded-lg transition-colors shadow-sm disabled:opacity-50"
               >
                 {isSubmitting ? "Declining..." : "Submit Decline"}
               </button>
@@ -528,4 +538,3 @@ export default function ClientReviewPage({ params }: PageProps) {
     </div>
   );
 }
-

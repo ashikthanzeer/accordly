@@ -2,7 +2,8 @@
  * Project Activity Timeline Service.
  *
  * Retrieves and formats chronological commercial events for a specific project
- * from persisted ProjectEvent records.
+ * from persisted ProjectEvent records, enriching events with resource IDs,
+ * proposal version tags, and direct workspace navigation links while sanitizing metadata.
  */
 
 import { prisma } from "@/lib/db";
@@ -14,9 +15,13 @@ export interface TimelineEventItem {
   id: string;
   projectId: string;
   actorType: "PROVIDER" | "CLIENT" | "SYSTEM" | "PAYPAL" | string;
+  actorId?: string | null;
   eventType: string;
   category: EventCategory;
   description: string;
+  resourceId?: string | null;
+  proposalVersion?: number | null;
+  href?: string;
   metadata?: Record<string, any>;
   createdAt: string;
   formattedDate: string;
@@ -50,7 +55,9 @@ export function deriveEventCategory(eventType: string): EventCategory {
     upper.includes("PROPOSAL") ||
     upper.includes("CHANGE_ORDER") ||
     upper.includes("ACCEPTED") ||
-    upper.includes("REJECTED")
+    upper.includes("REJECTED") ||
+    upper.includes("SUPERSEDED") ||
+    upper.includes("REVIEW_LINK")
   ) {
     return "PROPOSAL";
   }
@@ -61,6 +68,82 @@ export function deriveEventCategory(eventType: string): EventCategory {
     return "SCOPE";
   }
   return "GENERAL";
+}
+
+/**
+ * Sanitizes event metadata so internal prompts, raw tokens, or secrets are never exposed.
+ */
+export function sanitizeEventMetadata(
+  rawMeta: unknown
+): Record<string, any> | undefined {
+  if (!rawMeta || typeof rawMeta !== "object" || Array.isArray(rawMeta)) {
+    return undefined;
+  }
+
+  const FORBIDDEN_KEYS = new Set([
+    "prompt",
+    "systemPrompt",
+    "rawPrompt",
+    "reviewToken",
+    "reviewTokenHash",
+    "secret",
+    "apiKey",
+    "accessToken",
+  ]);
+
+  const clean: Record<string, any> = {};
+  for (const [key, value] of Object.entries(rawMeta as Record<string, any>)) {
+    if (FORBIDDEN_KEYS.has(key)) continue;
+    clean[key] = value;
+  }
+
+  return Object.keys(clean).length > 0 ? clean : undefined;
+}
+
+/**
+ * Resolves the relevant resource ID, proposal version, and workspace link for an event.
+ */
+export function resolveEventResourceContext(
+  projectId: string,
+  category: EventCategory,
+  meta?: Record<string, any>
+): {
+  resourceId: string | null;
+  proposalVersion: number | null;
+  href: string;
+} {
+  const proposalId = meta?.proposalId || meta?.changeOrderId || null;
+  const resourceId =
+    proposalId ||
+    meta?.changeRequestId ||
+    meta?.invoiceId ||
+    meta?.paypalInvoiceId ||
+    meta?.baselineId ||
+    meta?.documentId ||
+    null;
+
+  const rawVersion = meta?.version ?? meta?.proposalVersion ?? null;
+  const proposalVersion =
+    typeof rawVersion === "number" && Number.isFinite(rawVersion)
+      ? rawVersion
+      : null;
+
+  let href = `/projects/${projectId}/baseline`;
+  if (category === "PROPOSAL" || category === "INVOICE" || category === "PAYMENT") {
+    href = proposalId
+      ? `/projects/${projectId}/proposals/${proposalId}`
+      : `/projects/${projectId}/proposals`;
+  } else if (category === "REQUEST") {
+    href = `/projects/${projectId}/requests`;
+  } else if (category === "SCOPE") {
+    href = `/projects/${projectId}/baseline`;
+  }
+
+  return {
+    resourceId: resourceId ? String(resourceId) : null,
+    proposalVersion,
+    href,
+  };
 }
 
 /**
@@ -108,14 +191,26 @@ export async function getProjectTimeline(
 
   const events: TimelineEventItem[] = rawEvents.map((evt) => {
     const d = new Date(evt.createdAt);
+    const category = deriveEventCategory(evt.eventType);
+    const cleanMeta = sanitizeEventMetadata(evt.metadata);
+    const { resourceId, proposalVersion, href } = resolveEventResourceContext(
+      projectId,
+      category,
+      cleanMeta
+    );
+
     return {
       id: evt.id,
       projectId: evt.projectId,
       actorType: evt.actorType,
+      actorId: (evt as any).actorId ?? null,
       eventType: evt.eventType,
-      category: deriveEventCategory(evt.eventType),
+      category,
       description: evt.description,
-      metadata: (evt.metadata as Record<string, any>) || undefined,
+      resourceId,
+      proposalVersion,
+      href,
+      metadata: cleanMeta,
       createdAt: d.toISOString(),
       formattedDate: d.toLocaleDateString(undefined, {
         month: "short",
@@ -136,4 +231,3 @@ export async function getProjectTimeline(
     totalCount: events.length,
   };
 }
-

@@ -4,6 +4,7 @@ import React, { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { ProposalVersionComparison } from "@/components/proposals/ProposalVersionComparison";
 import { formatCurrency } from "@/lib/pricing/calculator";
 
 interface PageProps {
@@ -38,29 +39,47 @@ export default function ProposalsListPage({ params }: PageProps) {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case "CLIENT_ACCEPTED":
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#43B581]/15 text-[#43B581] border border-[#43B581]/30 whitespace-nowrap">
+            Client Accepted
+          </span>
+        );
+      case "CLIENT_REJECTED":
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#E06C75]/15 text-[#E06C75] border border-[#E06C75]/30 whitespace-nowrap">
+            Client Rejected
+          </span>
+        );
+      case "SENT_TO_CLIENT":
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#D4AF65]/15 text-[#D4AF65] border border-[#D4AF65]/30 whitespace-nowrap">
+            Sent to Client
+          </span>
+        );
       case "APPROVED":
       case "PROVIDER_APPROVED":
         return (
-          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#43B581]/15 text-[#43B581] border border-[#43B581]/30">
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#43B581]/15 text-[#43B581] border border-[#43B581]/30 whitespace-nowrap">
             Approved
           </span>
         );
       case "SUPERSEDED":
         return (
-          <span className="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded bg-[#111318] text-[#9298A3] border border-[#292D35]">
+          <span className="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded bg-[#111318] text-[#9298A3] border border-[#292D35] whitespace-nowrap">
             Superseded
           </span>
         );
       case "WITHDRAWN":
         return (
-          <span className="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded bg-[#E06C75]/15 text-[#E06C75] border border-[#E06C75]/30">
+          <span className="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded bg-[#E06C75]/15 text-[#E06C75] border border-[#E06C75]/30 whitespace-nowrap">
             Withdrawn
           </span>
         );
       case "DRAFT":
       default:
         return (
-          <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded bg-[#E5B45C]/15 text-[#E5B45C] border border-[#E5B45C]/30">
+          <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded bg-[#E5B45C]/15 text-[#E5B45C] border border-[#E5B45C]/30 whitespace-nowrap">
             Draft
           </span>
         );
@@ -200,6 +219,13 @@ export default function ProposalsListPage({ params }: PageProps) {
               })}
             </div>
           </GlassCard>
+        )}
+
+        {!isLoading && proposals.length > 0 && (
+          <ProposalVersionComparison
+            projectId={projectId}
+            proposals={proposals}
+          />
         )}
       </div>
     </AppShell>

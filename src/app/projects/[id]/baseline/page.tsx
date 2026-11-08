@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { DocumentUpload, type UploadedDocument } from "@/components/agreements/DocumentUpload";
 import { ScopeBaselineReview } from "@/components/baseline/ScopeBaselineReview";
+import { AgreementHealthCheck } from "@/components/baseline/AgreementHealthCheck";
 import { GlassCard } from "@/components/ui/GlassCard";
 import type { StructuredScopeBaseline } from "@/lib/ai/schema";
 import type { ProjectSummaryDto } from "@/lib/projects/schema";
@@ -231,6 +232,8 @@ export default function ProjectBaselinePage({ params }: PageProps) {
         {/* Step 3: Review & Edit Draft Scope Baseline */}
         {draftBaseline && (
           <section className="space-y-6">
+            <AgreementHealthCheck baseline={draftBaseline} />
+
             <ScopeBaselineReview
               baseline={draftBaseline}
               onChange={(updated) => setDraftBaseline(updated)}
@@ -259,7 +262,9 @@ export default function ProjectBaselinePage({ params }: PageProps) {
 
         {/* Step 4: Confirmed Active Scope Baseline View */}
         {confirmedBaseline && !draftBaseline && (
-          <section className="space-y-4">
+          <section className="space-y-6">
+            <AgreementHealthCheck baseline={confirmedBaseline.structuredScope} />
+
             <ScopeBaselineReview
               baseline={confirmedBaseline.structuredScope}
               onChange={() => {}}

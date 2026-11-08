@@ -10,11 +10,13 @@ import {
   aggregateFinancialsByCurrency,
   calculateDashboardKpis,
 } from "./calculator";
+import { computeScopeDriftRadar } from "./drift-radar";
 import type {
   ActionRequiredItem,
   DashboardOverviewResponse,
   ProjectCardSummary,
   RecentActivityItem,
+  ScopeDriftFilterInput,
 } from "./types";
 
 /**
@@ -159,13 +161,14 @@ export function detectActionRequiredItems(projects: any[]): ActionRequiredItem[]
  * scoped strictly to the authenticated provider's projects when userId is provided.
  */
 export async function getDashboardOverview(
-  userId?: string
+  userId?: string,
+  filters?: ScopeDriftFilterInput
 ): Promise<DashboardOverviewResponse> {
   const projects = await prisma.project.findMany({
     where: userId ? { ownerId: userId } : undefined,
     include: {
       baselines: {
-        select: { id: true, confirmedAt: true, version: true },
+        select: { id: true, confirmedAt: true, version: true, structuredScope: true },
       },
       requests: {
         select: { id: true, sourceText: true, classification: true, analysis: true, createdAt: true },
@@ -187,6 +190,7 @@ export async function getDashboardOverview(
 
   const kpis = calculateDashboardKpis(projects);
   const actionRequiredItems = detectActionRequiredItems(projects);
+  const scopeDriftRadar = computeScopeDriftRadar(projects, filters);
 
   // Recent projects summary cards
   const recentProjects: ProjectCardSummary[] = projects.map((p) => {
@@ -251,6 +255,7 @@ export async function getDashboardOverview(
     actionRequiredItems,
     recentProjects,
     recentActivity,
+    scopeDriftRadar,
   };
 }
 

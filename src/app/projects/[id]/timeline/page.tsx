@@ -207,13 +207,23 @@ export default function ProjectTimelinePage({ params }: TimelinePageProps) {
                 </div>
 
                 {/* Event Card */}
-                <GlassCard variant="surface" intensity="subtle" className="p-4 space-y-2 ml-3">
+                <GlassCard variant="surface" intensity="subtle" className="p-4 space-y-2.5 ml-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       {getActorBadge(event.actorType)}
                       <span className="text-[11px] font-bold text-[#9298A3] uppercase tracking-wider font-mono">
                         {event.eventType}
                       </span>
+                      {event.proposalVersion != null && (
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#D4AF65]/15 text-[#D4AF65] border border-[#D4AF65]/30">
+                          Proposal v{event.proposalVersion}
+                        </span>
+                      )}
+                      {event.resourceId && (
+                        <span className="text-[10px] font-mono text-[#9298A3] bg-[#090A0C]/80 border border-white/[0.08] px-2 py-0.5 rounded">
+                          ID: {event.resourceId}
+                        </span>
+                      )}
                     </div>
 
                     <div className="text-right text-[11px] text-[#9298A3] font-mono">
@@ -228,10 +238,15 @@ export default function ProjectTimelinePage({ params }: TimelinePageProps) {
 
                   {/* Metadata pill details if available */}
                   {event.metadata && Object.keys(event.metadata).length > 0 && (
-                    <div className="bg-[#111318]/90 rounded-lg p-2.5 text-[11px] font-mono text-[#9298A3] space-y-0.5 border border-[#292D35]">
-                      {event.metadata.amount && (
+                    <div className="bg-[#111318]/90 rounded-lg p-2.5 text-[11px] font-mono text-[#9298A3] flex flex-wrap items-center gap-x-4 gap-y-1 border border-[#292D35]">
+                      {event.metadata.amount != null && (
                         <div>
                           Amount: <span className="font-bold text-[#D4AF65]">{event.metadata.currency || "USD"} {event.metadata.amount}</span>
+                        </div>
+                      )}
+                      {event.metadata.classification && (
+                        <div>
+                          Classification: <span className="font-bold text-[#F5F3ED]">{event.metadata.classification}</span>
                         </div>
                       )}
                       {event.metadata.paypalInvoiceId && (
@@ -243,6 +258,19 @@ export default function ProjectTimelinePage({ params }: TimelinePageProps) {
                         <div>
                           Status: <span className="font-bold text-[#43B581]">{event.metadata.reconciledStatus}</span>
                         </div>
+                      )}
+                      {event.metadata.provider && (
+                        <div>
+                          AI Model: <span className="text-[#F5F3ED]">{event.metadata.provider}{event.metadata.model ? ` (${event.metadata.model})` : ""}</span>
+                        </div>
+                      )}
+                      {event.href && (
+                        <Link
+                          href={event.href}
+                          className="ml-auto text-[#D4AF65] hover:text-[#E2C17F] font-bold hover:underline"
+                        >
+                          Inspect Resource →
+                        </Link>
                       )}
                     </div>
                   )}

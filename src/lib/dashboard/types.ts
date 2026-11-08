@@ -75,6 +75,105 @@ export interface ProjectCardSummary {
   lastActivityAt: string;
 }
 
+/**
+ * Scope Drift Radar Models
+ */
+export interface ScopeDriftGlobalMetrics {
+  activeEngagementsCount: number;
+  totalChangeRequestsCount: number;
+  inScopeCount: number;
+  outOfScopeCount: number;
+  ambiguousCount: number;
+  pendingProposalsCount: number;
+  providerApprovedProposalsCount: number;
+  clientAcceptedProposalsCount: number;
+}
+
+export interface CurrencyCommercialPipeline {
+  currency: string;
+  additionalProposedValue: number;
+  formattedAdditionalProposedValue: string;
+  providerApprovedValue: number;
+  formattedProviderApprovedValue: string;
+  clientAcceptedValue: number;
+  formattedClientAcceptedValue: string;
+  additionalInvoicedValue: number;
+  formattedAdditionalInvoicedValue: string;
+  additionalRevenueCollected: number;
+  formattedAdditionalRevenueCollected: string;
+  outstandingAdditionalPayments: number;
+  formattedOutstandingAdditionalPayments: string;
+}
+
+export interface ProjectScopeIntelligence {
+  projectId: string;
+  projectName: string;
+  clientName: string;
+  currency: string;
+  status: string;
+  hasConfirmedBaseline: boolean;
+  baselineDeliverablesCount: number;
+  totalChangeRequests: number;
+  classificationDistribution: {
+    inScope: number;
+    outOfScope: number;
+    ambiguous: number;
+  };
+  unresolvedRequestsCount: number;
+  pendingProposalsCount: number;
+  acceptedChangesCount: number;
+  additionalProposedValue: number;
+  formattedAdditionalProposedValue: string;
+  providerApprovedValue: number;
+  formattedProviderApprovedValue: string;
+  additionalAcceptedValue: number;
+  formattedAdditionalAcceptedValue: string;
+  additionalInvoicedValue: number;
+  formattedAdditionalInvoicedValue: string;
+  additionalCollectedValue: number;
+  formattedAdditionalCollectedValue: string;
+  outstandingPayments: number;
+  formattedOutstandingPayments: string;
+  lastActivityAt: string;
+}
+
+export type ScopeDriftAlertType =
+  | "OUT_OF_SCOPE_WITHOUT_PROPOSAL"
+  | "AMBIGUOUS_REQUIRING_REVIEW"
+  | "PROPOSAL_AWAITING_CLIENT_ACCEPTANCE"
+  | "ACCEPTED_PROPOSAL_WITHOUT_INVOICE"
+  | "UNPAID_OR_OVERDUE_INVOICE"
+  | "MULTIPLE_UNRESOLVED_CHANGE_REQUESTS";
+
+export interface ScopeDriftAlert {
+  id: string;
+  type: ScopeDriftAlertType;
+  severity: "HIGH" | "MEDIUM" | "LOW";
+  title: string;
+  description: string;
+  rationale: string;
+  projectId: string;
+  projectName: string;
+  resourceId?: string;
+  href: string;
+}
+
+export interface ScopeDriftFilterInput {
+  projectId?: string;
+  dateRange?: "ALL" | "7D" | "30D" | "90D";
+  classification?: "ALL" | "IN_SCOPE" | "OUT_OF_SCOPE" | "AMBIGUOUS";
+  proposalStatus?: string;
+  invoiceStatus?: string;
+}
+
+export interface ScopeDriftRadarData {
+  globalMetrics: ScopeDriftGlobalMetrics;
+  pipelineByCurrency: Record<string, CurrencyCommercialPipeline>;
+  currencies: string[];
+  projectIntelligence: ProjectScopeIntelligence[];
+  driftAlerts: ScopeDriftAlert[];
+}
+
 export interface DashboardOverviewResponse {
   kpis: DashboardKpis;
   financialSummaries: Record<string, CurrencyFinancialSummary>;
@@ -82,5 +181,5 @@ export interface DashboardOverviewResponse {
   actionRequiredItems: ActionRequiredItem[];
   recentProjects: ProjectCardSummary[];
   recentActivity: RecentActivityItem[];
+  scopeDriftRadar?: ScopeDriftRadarData;
 }
-

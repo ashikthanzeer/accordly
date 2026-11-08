@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { VisualScopeComparison } from "@/components/requests/VisualScopeComparison";
+import type { StructuredScopeBaseline } from "@/lib/ai/schema";
 import type {
   ChangeRequestAnalysisResult,
   ClassificationType,
@@ -12,6 +14,10 @@ interface ChangeRequestAnalysisViewProps {
   changeRequestId: string;
   projectId: string;
   sourceText: string;
+  createdAt?: string;
+  agreementName?: string | null;
+  baselineVersion?: number | null;
+  structuredBaseline?: StructuredScopeBaseline | null;
   analysis: ChangeRequestAnalysisResult & {
     reviewStatus?: "PENDING_REVIEW" | "REVIEWED";
     reviewedAt?: string | null;
@@ -24,6 +30,10 @@ export function ChangeRequestAnalysisView({
   changeRequestId,
   projectId,
   sourceText,
+  createdAt,
+  agreementName,
+  baselineVersion,
+  structuredBaseline,
   analysis,
   onReviewSaved,
 }: ChangeRequestAnalysisViewProps) {
@@ -236,91 +246,15 @@ export function ChangeRequestAnalysisView({
         </div>
       </div>
 
-      {/* Client Request Context */}
-      <GlassCard variant="surface" intensity="subtle" className="p-5">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-[#9298A3] mb-2 flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF65]" />
-          Original Client Message
-        </h3>
-        <div className="bg-[#090A0C]/90 border border-[#292D35] rounded-lg p-3.5 text-sm text-[#F5F3ED] font-mono whitespace-pre-wrap">
-          {sourceText}
-        </div>
-      </GlassCard>
-
-      {/* Supporting Evidence Cards */}
-      <GlassCard variant="surface" intensity="prominent" className="p-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-[#292D35] pb-3">
-          <div>
-            <h3 className="text-base font-bold text-[#F5F3ED]">
-              Contractual Evidence & Source Citations
-            </h3>
-            <p className="text-xs text-[#9298A3]">
-              Clauses retrieved from the signed agreement and confirmed baseline.
-            </p>
-          </div>
-          <span className="text-xs font-mono text-[#D4AF65]">
-            {analysis.supportingEvidence.length} citation
-            {analysis.supportingEvidence.length === 1 ? "" : "s"}
-          </span>
-        </div>
-
-        {analysis.supportingEvidence.length === 0 ? (
-          <p className="text-sm text-[#9298A3] italic py-2">
-            No specific contract clauses directly mention this request (silence in agreement).
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {analysis.supportingEvidence.map((ev, idx) => (
-              <div
-                key={idx}
-                className="border border-[#292D35] rounded-lg p-4 bg-[#111318]/70 hover:bg-[#111318] space-y-2 hover:border-[#D4AF65]/40 transition-all"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold uppercase px-2 py-0.5 rounded bg-[#D4AF65]/10 text-[#D4AF65] border border-[#D4AF65]/30">
-                      {ev.category.replace(/_/g, " ")}
-                    </span>
-                    {ev.page && (
-                      <span className="text-xs text-[#9298A3] font-medium">
-                        Page {ev.page}
-                      </span>
-                    )}
-                    {ev.section && (
-                      <span className="text-xs text-[#9298A3]">
-                        • Section: {ev.section}
-                      </span>
-                    )}
-                  </div>
-
-                  <div>
-                    {ev.isVerified ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#43B581] bg-[#43B581]/10 border border-[#43B581]/30 px-2 py-0.5 rounded-full">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                        </svg>
-                        Verified in Contract
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#E5B45C] bg-[#E5B45C]/10 border border-[#E5B45C]/30 px-2 py-0.5 rounded-full">
-                        Unverified Quote
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <blockquote className="border-l-2 border-[#D4AF65] pl-3 italic text-sm text-[#F5F3ED] my-1 bg-[#090A0C]/80 py-2 rounded-r">
-                  &ldquo;{ev.verbatimExcerpt}&rdquo;
-                </blockquote>
-
-                <p className="text-xs text-[#9298A3]">
-                  <span className="font-semibold text-[#F5F3ED]">Relevance:</span>{" "}
-                  {ev.relevanceExplanation}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-      </GlassCard>
+      {/* Split-Screen Visual Scope Comparison (LEFT Baseline vs RIGHT Client Request & BELOW Evidence) */}
+      <VisualScopeComparison
+        agreementName={agreementName}
+        baselineVersion={baselineVersion ?? analysis.baselineVersion}
+        structuredBaseline={structuredBaseline}
+        sourceText={sourceText}
+        createdAt={createdAt}
+        analysis={analysis}
+      />
 
       {/* Contradicting Evidence (if any) */}
       {analysis.contradictingEvidence &&

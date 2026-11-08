@@ -34,6 +34,8 @@ export default function ProjectRequestsPage({ params }: PageProps) {
 
   const [hasConfirmedBaseline, setHasConfirmedBaseline] = useState<boolean>(false);
   const [baselineVersion, setBaselineVersion] = useState<number | undefined>(undefined);
+  const [structuredBaseline, setStructuredBaseline] = useState<any | null>(null);
+  const [agreementFileName, setAgreementFileName] = useState<string | null>(null);
   const [isLoadingStatus, setIsLoadingStatus] = useState<boolean>(true);
   const [changeRequests, setChangeRequests] = useState<StoredChangeRequest[]>([]);
   const [activeRequest, setActiveRequest] = useState<StoredChangeRequest | null>(null);
@@ -52,6 +54,8 @@ export default function ProjectRequestsPage({ params }: PageProps) {
         if (baselineData.hasConfirmedBaseline && baselineData.baseline) {
           setHasConfirmedBaseline(true);
           setBaselineVersion(baselineData.baseline.version || 1);
+          setStructuredBaseline(baselineData.baseline.structuredScope || null);
+          setAgreementFileName(baselineData.baseline.document?.fileName || null);
         } else {
           setHasConfirmedBaseline(false);
         }
@@ -257,6 +261,10 @@ export default function ProjectRequestsPage({ params }: PageProps) {
               changeRequestId={activeRequest.id}
               projectId={projectId}
               sourceText={activeRequest.sourceText}
+              createdAt={activeRequest.createdAt}
+              agreementName={agreementFileName}
+              baselineVersion={baselineVersion}
+              structuredBaseline={structuredBaseline}
               analysis={activeRequest.analysis}
               onReviewSaved={handleReviewSaved}
             />

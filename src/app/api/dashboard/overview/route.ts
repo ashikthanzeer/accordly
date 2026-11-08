@@ -14,7 +14,18 @@ export async function GET(req: NextRequest) {
       return unauthorizedResponse();
     }
 
-    const overview = await getDashboardOverview(user.id);
+    const searchParams = req.nextUrl?.searchParams;
+    const filters = searchParams
+      ? {
+          projectId: searchParams.get("projectId") || undefined,
+          dateRange: (searchParams.get("dateRange") as any) || undefined,
+          classification: (searchParams.get("classification") as any) || undefined,
+          proposalStatus: searchParams.get("proposalStatus") || undefined,
+          invoiceStatus: searchParams.get("invoiceStatus") || undefined,
+        }
+      : undefined;
+
+    const overview = await getDashboardOverview(user.id, filters);
     return NextResponse.json(overview, { status: 200 });
   } catch (error: any) {
     console.error("Error fetching dashboard overview:", error);

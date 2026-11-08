@@ -1,52 +1,97 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { KpiCards } from "@/components/dashboard/KpiCards";
+import { ScopeDriftRadar } from "@/components/dashboard/ScopeDriftRadar";
 import { FinancialOverview } from "@/components/dashboard/FinancialOverview";
 import { ActionRequiredList } from "@/components/dashboard/ActionRequiredList";
 import { ProjectGrid } from "@/components/dashboard/ProjectGrid";
 import { RecentActivityFeed } from "@/components/dashboard/RecentActivityFeed";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { CreateProjectModal } from "@/components/projects/CreateProjectModal";
-import type { DashboardOverviewResponse } from "@/lib/dashboard/types";
+import type {
+  DashboardOverviewResponse,
+  ScopeDriftFilterInput,
+} from "@/lib/dashboard/types";
 
 export default function HomePage() {
   const [data, setData] = useState<DashboardOverviewResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFilteringRadar, setIsFilteringRadar] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
+  const [radarFilters, setRadarFilters] = useState<ScopeDriftFilterInput>({
+    projectId: "ALL",
+    dateRange: "ALL",
+    classification: "ALL",
+    proposalStatus: "ALL",
+    invoiceStatus: "ALL",
+  });
 
   const defaultProjectId = data?.recentProjects?.[0]?.id || "demo-project-01";
 
-  const fetchOverview = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/dashboard/overview");
-      if (!res.ok) {
-        throw new Error(`Failed to load dashboard: HTTP ${res.status}`);
+  const fetchOverview = useCallback(
+    async (activeFilters: ScopeDriftFilterInput = radarFilters, isFilterChange = false) => {
+      if (isFilterChange) {
+        setIsFilteringRadar(true);
+      } else {
+        setIsLoading(true);
       }
-      const json = await res.json();
-      setData(json);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error loading dashboard");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      setError(null);
+      try {
+        const params = new URLSearchParams();
+        if (activeFilters.projectId && activeFilters.projectId !== "ALL") {
+          params.set("projectId", activeFilters.projectId);
+        }
+        if (activeFilters.dateRange && activeFilters.dateRange !== "ALL") {
+          params.set("dateRange", activeFilters.dateRange);
+        }
+        if (activeFilters.classification && activeFilters.classification !== "ALL") {
+          params.set("classification", activeFilters.classification);
+        }
+        if (activeFilters.proposalStatus && activeFilters.proposalStatus !== "ALL") {
+          params.set("proposalStatus", activeFilters.proposalStatus);
+        }
+        if (activeFilters.invoiceStatus && activeFilters.invoiceStatus !== "ALL") {
+          params.set("invoiceStatus", activeFilters.invoiceStatus);
+        }
+
+        const qs = params.toString();
+        const url = qs ? `/api/dashboard/overview?${qs}` : "/api/dashboard/overview";
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error(`Failed to load dashboard: HTTP ${res.status}`);
+        }
+        const json = await res.json();
+        setData(json);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Error loading dashboard");
+      } finally {
+        setIsLoading(false);
+        setIsFilteringRadar(false);
+      }
+    },
+    [radarFilters]
+  );
 
   useEffect(() => {
-    fetchOverview();
+    fetchOverview(radarFilters, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleRadarFiltersChange = (nextFilters: ScopeDriftFilterInput) => {
+    setRadarFilters(nextFilters);
+    fetchOverview(nextFilters, true);
+  };
+
   const headerActions = (
-    <div className="flex items-center gap-2.5">
+    <div className="flex items-center gap-2.5 flex-wrap">
       <button
         type="button"
-        onClick={fetchOverview}
-        disabled={isLoading}
+        onClick={() => fetchOverview(radarFilters, false)}
+        disabled={isLoading || isFilteringRadar}
         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#9298A3] hover:text-[#F5F3ED] bg-white/[0.04] hover:bg-white/[0.08] transition-colors border border-white/[0.08] disabled:opacity-50"
       >
         <span>Refresh</span>
@@ -88,7 +133,7 @@ export default function HomePage() {
               Executive Commercial Overview
             </h1>
             <p className="text-xs lg:text-sm text-[#9298A3] mt-1.5 max-w-2xl leading-relaxed">
-              From agreement to payment, seamlessly. Real-time scope intelligence, client change orders, and authoritative PayPal Sandbox settlements.
+              From scope to payment. Every change accounted for. Real-time scope intelligence, immutable commercial proposals, and authoritative PayPal Sandbox settlements.
             </p>
           </div>
 
@@ -116,7 +161,7 @@ export default function HomePage() {
         <div className="p-4 bg-[#E06C75]/15 border border-[#E06C75]/30 rounded-xl text-xs text-[#E06C75] flex items-center justify-between shadow-sm">
           <span>{error}</span>
           <button
-            onClick={fetchOverview}
+            onClick={() => fetchOverview(radarFilters, false)}
             className="font-bold underline ml-4 hover:text-white"
           >
             Try Again
@@ -138,6 +183,20 @@ export default function HomePage() {
         <div className="space-y-8">
           {/* KPI Cards Row */}
           <KpiCards kpis={data.kpis} />
+
+          {/* Signature Feature: Scope Drift Radar */}
+          {data.scopeDriftRadar && (
+            <ScopeDriftRadar
+              radar={data.scopeDriftRadar}
+              allProjects={(data.recentProjects || []).map((p) => ({
+                id: p.id,
+                name: p.name,
+              }))}
+              filters={radarFilters}
+              onFiltersChange={handleRadarFiltersChange}
+              isFiltering={isFilteringRadar}
+            />
+          )}
 
           {/* Two-Column Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -178,23 +237,23 @@ export default function HomePage() {
                     className="block p-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:border-[#D4AF65]/40 hover:bg-white/[0.05] transition-all"
                   >
                     <span className="font-bold text-[#F5F3ED] block">Commercial Proposals</span>
-                    <span className="text-[11px] text-[#9298A3]">Draft, price, and share change orders with clients.</span>
+                    <span className="text-[11px] text-[#9298A3]">Draft, price, compare versions, and share change orders with clients.</span>
                   </Link>
 
                   <Link
                     href={`/projects/${defaultProjectId}/requests`}
                     className="block p-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:border-[#D4AF65]/40 hover:bg-white/[0.05] transition-all"
                   >
-                    <span className="font-bold text-[#F5F3ED] block">Scope Intelligence</span>
-                    <span className="text-[11px] text-[#9298A3]">Tri-state classification against agreed baselines.</span>
+                    <span className="font-bold text-[#F5F3ED] block">Visual Scope Comparison</span>
+                    <span className="text-[11px] text-[#9298A3]">Split-screen comparison of client requests against signed baselines.</span>
                   </Link>
 
                   <Link
                     href={`/projects/${defaultProjectId}/baseline`}
                     className="block p-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:border-[#D4AF65]/40 hover:bg-white/[0.05] transition-all"
                   >
-                    <span className="font-bold text-[#F5F3ED] block">Agreement Ingestion</span>
-                    <span className="text-[11px] text-[#9298A3]">PDF/TXT upload and 7-category contract extraction.</span>
+                    <span className="font-bold text-[#F5F3ED] block">Agreement Ingestion & Health Check</span>
+                    <span className="text-[11px] text-[#9298A3]">PDF/TXT upload, 10-point commercial health check, and baseline lock.</span>
                   </Link>
 
                   <Link
@@ -202,7 +261,7 @@ export default function HomePage() {
                     className="block p-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:border-[#D4AF65]/40 hover:bg-white/[0.05] transition-all"
                   >
                     <span className="font-bold text-[#F5F3ED] block">Project Activity Timeline</span>
-                    <span className="text-[11px] text-[#9298A3]">Auditable chronological lifecycle history.</span>
+                    <span className="text-[11px] text-[#9298A3]">Auditable chronological commercial lifecycle history.</span>
                   </Link>
                 </div>
               </GlassCard>
@@ -215,7 +274,7 @@ export default function HomePage() {
         isOpen={isCreateProjectOpen}
         onClose={() => setIsCreateProjectOpen(false)}
         onProjectCreated={() => {
-          fetchOverview();
+          fetchOverview(radarFilters, false);
         }}
       />
     </AppShell>

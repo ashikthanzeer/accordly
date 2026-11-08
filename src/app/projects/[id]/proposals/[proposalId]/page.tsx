@@ -7,6 +7,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { ProposalContentEditor } from "@/components/proposals/ProposalContentEditor";
 import { PricingEditor } from "@/components/proposals/PricingEditor";
+import { ProposalVersionComparison } from "@/components/proposals/ProposalVersionComparison";
 import { ClientShareModal } from "@/components/proposals/ClientShareModal";
 import { InvoiceReviewModal } from "@/components/invoicing/InvoiceReviewModal";
 import { PayPalInvoiceCard } from "@/components/invoicing/PayPalInvoiceCard";
@@ -36,6 +37,7 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
 
   // Proposal state
   const [proposal, setProposal] = useState<any | null>(null);
+  const [allProposals, setAllProposals] = useState<any[]>([]);
   const [isBranchingVersion, setIsBranchingVersion] = useState(false);
 
   // Content state
@@ -98,17 +100,26 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
         };
         setPricingConfig(initialPricing);
 
-        // Check for active PayPal invoice
+        // Check for active PayPal invoice and load sibling proposal versions
         try {
-          const invRes = await fetch(`/api/projects/${projectId}/proposals/${proposalId}/invoice`);
+          const [invRes, listRes] = await Promise.all([
+            fetch(`/api/projects/${projectId}/proposals/${proposalId}/invoice`),
+            fetch(`/api/projects/${projectId}/proposals`),
+          ]);
           if (invRes.ok) {
             const invData = await invRes.json();
             if (invData.invoice) {
               setActiveInvoice(invData.invoice);
             }
           }
+          if (listRes.ok) {
+            const listData = await listRes.json();
+            if (Array.isArray(listData.proposals)) {
+              setAllProposals(listData.proposals);
+            }
+          }
         } catch {
-          // Non-blocking invoice fetch
+          // Non-blocking invoice & version list fetch
         }
       } catch (err: unknown) {
         setFeedbackMsg({
@@ -717,6 +728,15 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
           isReadOnly={isReadOnly}
           onChange={setPricingConfig}
         />
+
+        {/* Version History & Side-by-Side Version Comparison */}
+        {allProposals.length > 0 && (
+          <ProposalVersionComparison
+            projectId={projectId}
+            proposals={allProposals}
+            currentProposalId={proposalId}
+          />
+        )}
       </div>
 
       {/* Provider Approval Confirmation Modal */}

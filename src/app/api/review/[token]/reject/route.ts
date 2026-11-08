@@ -10,7 +10,8 @@ interface RouteParams {
 /**
  * POST /api/review/[token]/reject
  * Client explicitly rejects the change proposal with optional feedback.
- * Enforces token validity, unexpired status, and duplicate decision prevention.
+ * Enforces token validity, unexpired status, duplicate decision prevention,
+ * and rejection of superseded or withdrawn proposals.
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
@@ -46,6 +47,30 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Prevent decisions on superseded proposals
+    if (proposal.status === "SUPERSEDED") {
+      return NextResponse.json(
+        {
+          error: `Cannot reject: Proposal v${proposal.version} has been superseded by a newer version.`,
+          status: "SUPERSEDED",
+          version: proposal.version,
+        },
+        { status: 409 }
+      );
+    }
+
+    // Prevent decisions on withdrawn proposals
+    if (proposal.status === "WITHDRAWN") {
+      return NextResponse.json(
+        {
+          error: `Cannot reject: Proposal v${proposal.version} was withdrawn by the service provider.`,
+          status: "WITHDRAWN",
+          version: proposal.version,
+        },
+        { status: 409 }
+      );
+    }
+
     // Prevent duplicate decisions (Replay protection)
     if (proposal.clientAcceptedAt || proposal.clientRejectedAt) {
       return NextResponse.json(
@@ -71,6 +96,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       rejectionReason,
       clientName: body?.clientName || proposal.project.clientName,
       clientEmail: body?.clientEmail || proposal.project.clientEmail,
+      version: proposal.version,
       ipAddress: req.headers.get("x-forwarded-for") || "unknown",
       userAgent: req.headers.get("user-agent") || "unknown",
     };
@@ -117,4 +143,3 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     );
   }
 }
-

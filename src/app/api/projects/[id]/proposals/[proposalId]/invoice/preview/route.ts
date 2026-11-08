@@ -15,9 +15,15 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const result = await getProposalInvoicePreview(projectId, proposalId);
 
     if (!result.eligible && !result.isAlreadyInvoiced) {
+      const isIntegrityError = Boolean(
+        result.reason?.toLowerCase().includes("integrity verification failed")
+      );
       return NextResponse.json(
-        { error: result.reason || "Proposal not eligible for invoicing." },
-        { status: 400 }
+        {
+          error: result.reason || "Proposal not eligible for invoicing.",
+          integrityError: isIntegrityError,
+        },
+        { status: isIntegrityError ? 422 : 400 }
       );
     }
 

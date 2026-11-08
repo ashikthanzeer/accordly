@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { hashReviewToken, isTokenExpired } from "@/lib/proposals/tokens";
 import { serializePublicProposal } from "@/lib/proposals/serializer";
+import { verifySnapshotIntegrity } from "@/lib/proposals/snapshot";
 
 interface RouteParams {
   params: Promise<{ token: string }>;
@@ -10,7 +11,8 @@ interface RouteParams {
 /**
  * POST /api/review/[token]/accept
  * Client explicitly accepts the change proposal.
- * Enforces token validity, unexpired status, and duplicate decision prevention.
+ * Enforces token validity, unexpired status, duplicate decision prevention,
+ * strict rejection of superseded/withdrawn proposals, and snapshot integrity verification.
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
@@ -46,6 +48,30 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Prevent decisions on superseded proposals
+    if (proposal.status === "SUPERSEDED") {
+      return NextResponse.json(
+        {
+          error: `Cannot accept: Proposal v${proposal.version} has been superseded by a newer version. Please request an updated review link.`,
+          status: "SUPERSEDED",
+          version: proposal.version,
+        },
+        { status: 409 }
+      );
+    }
+
+    // Prevent decisions on withdrawn proposals
+    if (proposal.status === "WITHDRAWN") {
+      return NextResponse.json(
+        {
+          error: `Cannot accept: Proposal v${proposal.version} was withdrawn by the service provider.`,
+          status: "WITHDRAWN",
+          version: proposal.version,
+        },
+        { status: 409 }
+      );
+    }
+
     // Prevent duplicate decisions (Replay protection)
     if (proposal.clientAcceptedAt || proposal.clientRejectedAt) {
       return NextResponse.json(
@@ -53,6 +79,18 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           error: `A final decision has already been recorded for this proposal (${proposal.status}). Subsequent modifications are prohibited.`,
           status: proposal.status,
           decidedAt: proposal.clientAcceptedAt || proposal.clientRejectedAt,
+        },
+        { status: 409 }
+      );
+    }
+
+    // Validate cryptographic snapshot integrity
+    const integrity = verifySnapshotIntegrity(proposal);
+    if (!integrity.isValid) {
+      return NextResponse.json(
+        {
+          error: `Cannot accept: Proposal snapshot integrity verification failed (${integrity.error}).`,
+          integrityError: true,
         },
         { status: 409 }
       );
@@ -69,6 +107,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       acceptedAt: acceptedAt.toISOString(),
       clientName: body?.clientName || proposal.project.clientName,
       clientEmail: body?.clientEmail || proposal.project.clientEmail,
+      version: proposal.version,
+      snapshotHash: integrity.expectedHash || integrity.computedHash || null,
       ipAddress: req.headers.get("x-forwarded-for") || "unknown",
       userAgent: req.headers.get("user-agent") || "unknown",
     };
@@ -98,6 +138,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           amount: Number(proposal.amount),
           currency: proposal.currency,
           acceptedAt: acceptedAt.toISOString(),
+          snapshotHash: clientDecision.snapshotHash,
         },
       },
     });
@@ -116,4 +157,3 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     );
   }
 }
-

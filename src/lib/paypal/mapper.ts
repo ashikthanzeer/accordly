@@ -12,6 +12,7 @@ import {
   MappedInvoicePreview,
 } from "./types";
 import { formatDecimalAmount } from "./validation";
+import { verifySnapshotIntegrity } from "@/lib/proposals/snapshot";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -78,6 +79,22 @@ export function validateInvoiceEligibility(
     };
   }
 
+  // 5. Verify snapshot integrity if snapshot is present
+  const deliverablesObj =
+    proposal.deliverables && typeof proposal.deliverables === "object"
+      ? (proposal.deliverables as Record<string, unknown>)
+      : {};
+
+  if (deliverablesObj.approvedSnapshot) {
+    const integrity = verifySnapshotIntegrity(proposal);
+    if (!integrity.isValid) {
+      return {
+        eligible: false,
+        reason: `Cannot invoice proposal: Approved snapshot integrity verification failed (${integrity.error}).`,
+      };
+    }
+  }
+
   return {
     eligible: true,
   };
@@ -85,6 +102,7 @@ export function validateInvoiceEligibility(
 
 /**
  * Maps an accepted change proposal and its parent project into a PayPal draft invoice payload and preview.
+ * Strictly derives line items, totals, and currency from the verified approvedSnapshot.
  */
 export function mapProposalToPayPalInvoice(
   proposal: any,
@@ -101,9 +119,11 @@ export function mapProposalToPayPalInvoice(
       ? (proposal.deliverables as Record<string, any>)
       : {};
 
-  const pricing = deliverablesJson.pricing || {};
-  const currency = (proposal.currency || pricing.currency || "USD").trim().toUpperCase();
-  const rawAmount = Number(proposal.amount) || Number(pricing.total) || 0;
+  // Extract terms strictly from approvedSnapshot where available
+  const snapshot = deliverablesJson.approvedSnapshot;
+  const pricing = snapshot?.pricing || deliverablesJson.pricing || {};
+  const currency = (snapshot?.currency || proposal.currency || pricing.currency || "USD").trim().toUpperCase();
+  const rawAmount = Number(snapshot?.amount) || Number(proposal.amount) || Number(pricing.total) || 0;
   const formattedTotal = formatDecimalAmount(rawAmount, currency);
 
   const rawLineItems = Array.isArray(pricing.lineItems) ? pricing.lineItems : [];
@@ -139,9 +159,10 @@ export function mapProposalToPayPalInvoice(
     }
   } else {
     // Single deliverable fallback
+    const fallbackTitle = snapshot?.title || proposal.description || "Approved Scope Change Order";
     mappedLineItems.push({
-      name: (proposal.description || "Approved Scope Change Order").slice(0, 120),
-      description: proposal.description || undefined,
+      name: fallbackTitle.slice(0, 120),
+      description: snapshot?.description || proposal.description || undefined,
       quantity: 1,
       unitPrice: rawAmount,
       unitAmount: formattedTotal,

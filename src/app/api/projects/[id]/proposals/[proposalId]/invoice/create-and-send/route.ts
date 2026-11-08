@@ -19,9 +19,15 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     });
 
     if (!result.success) {
+      const isIntegrityError = Boolean(
+        result.error?.toLowerCase().includes("integrity verification failed")
+      );
       return NextResponse.json(
-        { error: result.error || "Failed to create and send invoice." },
-        { status: 400 }
+        {
+          error: result.error || "Failed to create and send invoice.",
+          integrityError: isIntegrityError,
+        },
+        { status: isIntegrityError ? 422 : 400 }
       );
     }
 

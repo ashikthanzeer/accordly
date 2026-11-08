@@ -28,7 +28,28 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (proposal.status === "WITHDRAWN") {
       return NextResponse.json(
         { error: "Proposal is already withdrawn." },
-        { status: 400 }
+        { status: 409 }
+      );
+    }
+
+    if (proposal.status === "CLIENT_ACCEPTED") {
+      return NextResponse.json(
+        {
+          error: `Cannot withdraw proposal: Change Proposal v${proposal.version} has already been accepted by the client. Formal credit/cancellation or a superseding amendment is required.`,
+          status: proposal.status,
+          acceptedAt: proposal.clientAcceptedAt,
+        },
+        { status: 409 }
+      );
+    }
+
+    if (proposal.status === "SUPERSEDED") {
+      return NextResponse.json(
+        {
+          error: `Cannot withdraw proposal: Proposal v${proposal.version} has already been superseded by a newer version.`,
+          status: proposal.status,
+        },
+        { status: 409 }
       );
     }
 

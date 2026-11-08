@@ -53,8 +53,9 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 /**
  * PUT /api/projects/[id]/proposals/[proposalId]
  * Updates proposal content and pricing.
- * If proposal is already APPROVED, automatically creates a new version (vN+1)
- * with status DRAFT and marks the existing version as SUPERSEDED.
+ * Strictly enforced: Only proposals in DRAFT status can be modified.
+ * Once approved, terminal, or withdrawn, proposals are immutable (HTTP 409 Conflict).
+ * Subsequent modifications must branch into a new version via POST /.../versions.
  */
 export async function PUT(req: NextRequest, { params }: RouteParams) {
   try {
@@ -73,10 +74,15 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       );
     }
 
-    if (existingProposal.status === "WITHDRAWN") {
+    // Strict Immutability Guard: Only DRAFT proposals can be modified
+    if (existingProposal.status !== "DRAFT") {
       return NextResponse.json(
-        { error: "Cannot edit a withdrawn proposal." },
-        { status: 400 }
+        {
+          error: `Proposal v${existingProposal.version} is locked in '${existingProposal.status}' status and cannot be modified. To make changes, create a new version.`,
+          status: existingProposal.status,
+          version: existingProposal.version,
+        },
+        { status: 409 }
       );
     }
 
@@ -126,97 +132,23 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       pricingConfig,
     };
 
-    // Case 1: Proposal is currently DRAFT -> update in-place
-    if (existingProposal.status === "DRAFT") {
-      const updated = await prisma.changeOrder.update({
-        where: { id: proposalId },
-        data: {
-          description,
-          deliverables: updatedDeliverablesPayload as any,
-          assumptions: Array.isArray(assumptions) ? assumptions.join("\n") : String(assumptions),
-          timelineImpact,
-          amount: calculatedPricing.total,
-          currency: projectCurrency,
-        },
-      });
+    const updated = await prisma.changeOrder.update({
+      where: { id: proposalId },
+      data: {
+        description,
+        deliverables: updatedDeliverablesPayload as any,
+        assumptions: Array.isArray(assumptions) ? assumptions.join("\n") : String(assumptions),
+        timelineImpact,
+        amount: calculatedPricing.total,
+        currency: projectCurrency,
+      },
+    });
 
-      return NextResponse.json({
-        success: true,
-        proposal: updated,
-        isNewVersion: false,
-      });
-    }
-
-    // Case 2: Proposal is APPROVED -> Immutability enforced! Create version N+1
-    if (
-      existingProposal.status === "APPROVED" ||
-      existingProposal.status === "PROVIDER_APPROVED"
-    ) {
-      // 1. Mark existing proposal as SUPERSEDED
-      await prisma.changeOrder.update({
-        where: { id: proposalId },
-        data: { status: "SUPERSEDED" },
-      });
-
-      // 2. Find next version number
-      const latestOrder = await prisma.changeOrder.findFirst({
-        where: { projectId },
-        orderBy: { version: "desc" },
-      });
-      const newVersion = (latestOrder?.version || 0) + 1;
-
-      // 3. Create new ChangeOrder record
-      const newProposal = await prisma.changeOrder.create({
-        data: {
-          projectId,
-          changeRequestId: existingProposal.changeRequestId,
-          version: newVersion,
-          status: "DRAFT",
-          description,
-          deliverables: {
-            ...updatedDeliverablesPayload,
-            supersededProposalId: proposalId,
-            supersededVersion: existingProposal.version,
-          } as any,
-          assumptions: Array.isArray(assumptions) ? assumptions.join("\n") : String(assumptions),
-          timelineImpact,
-          amount: calculatedPricing.total,
-          currency: projectCurrency,
-        },
-      });
-
-      // 4. Log audit event
-      await prisma.projectEvent.create({
-        data: {
-          projectId,
-          actorType: "PROVIDER",
-          eventType: "PROPOSAL_VERSION_CREATED",
-          description: `Created Change Proposal v${newVersion} (superseding approved v${existingProposal.version}).`,
-          metadata: {
-            newProposalId: newProposal.id,
-            previousProposalId: proposalId,
-            newVersion,
-            previousVersion: existingProposal.version,
-            amount: calculatedPricing.total,
-          },
-        },
-      });
-
-      return NextResponse.json(
-        {
-          success: true,
-          proposal: newProposal,
-          isNewVersion: true,
-          supersededProposalId: proposalId,
-        },
-        { status: 201 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: `Cannot update proposal with status ${existingProposal.status}.` },
-      { status: 400 }
-    );
+    return NextResponse.json({
+      success: true,
+      proposal: updated,
+      isNewVersion: false,
+    });
   } catch (err: unknown) {
     if (err instanceof PricingCalculationError) {
       return NextResponse.json(

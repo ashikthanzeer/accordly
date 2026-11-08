@@ -36,7 +36,7 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
 
   // Proposal state
   const [proposal, setProposal] = useState<any | null>(null);
-  const [isEditingApproved, setIsEditingApproved] = useState(false);
+  const [isBranchingVersion, setIsBranchingVersion] = useState(false);
 
   // Content state
   const [content, setContent] = useState<{
@@ -123,12 +123,17 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
     loadProposal();
   }, [projectId, proposalId]);
 
+  const isDraft = proposal?.status === "DRAFT";
   const isApproved = proposal?.status === "APPROVED" || proposal?.status === "PROVIDER_APPROVED";
+  const isSent = proposal?.status === "SENT_TO_CLIENT";
+  const isClientAccepted = proposal?.status === "CLIENT_ACCEPTED";
+  const isClientRejected = proposal?.status === "CLIENT_REJECTED";
   const isSuperseded = proposal?.status === "SUPERSEDED";
   const isWithdrawn = proposal?.status === "WITHDRAWN";
-  const isReadOnly = (isApproved && !isEditingApproved) || isSuperseded || isWithdrawn;
+  const isReadOnly = !isDraft;
 
   const handleSaveDraft = async () => {
+    if (!isDraft) return;
     setIsSaving(true);
     setFeedbackMsg(null);
 
@@ -152,18 +157,8 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to save proposal.");
 
-      if (data.isNewVersion) {
-        setFeedbackMsg({
-          type: "success",
-          text: `Approved proposal was preserved. Created new proposal v${data.proposal.version}!`,
-        });
-        setTimeout(() => {
-          router.push(`/projects/${projectId}/proposals/${data.proposal.id}`);
-        }, 1200);
-      } else {
-        setProposal(data.proposal);
-        setFeedbackMsg({ type: "success", text: "Proposal draft saved successfully." });
-      }
+      setProposal(data.proposal);
+      setFeedbackMsg({ type: "success", text: "Proposal draft saved successfully." });
     } catch (err: unknown) {
       setFeedbackMsg({
         type: "error",
@@ -171,6 +166,35 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleCreateNewVersion = async () => {
+    setIsBranchingVersion(true);
+    setFeedbackMsg(null);
+
+    try {
+      const res = await fetch(`/api/projects/${projectId}/proposals/${proposalId}/versions`, {
+        method: "POST",
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create new version.");
+
+      setFeedbackMsg({
+        type: "success",
+        text: `Created new Change Proposal v${data.proposal.version} (Draft). Redirecting...`,
+      });
+      setTimeout(() => {
+        router.push(`/projects/${projectId}/proposals/${data.proposal.id}`);
+      }, 800);
+    } catch (err: unknown) {
+      setFeedbackMsg({
+        type: "error",
+        text: err instanceof Error ? err.message : "Error creating new version",
+      });
+    } finally {
+      setIsBranchingVersion(false);
     }
   };
 
@@ -413,13 +437,17 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
             </button>
           )}
 
-          {isApproved && !isEditingApproved && (
+          {!isDraft && proposal.status !== "WITHDRAWN" && (
             <button
               type="button"
-              onClick={() => setIsEditingApproved(true)}
-              className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold text-[#D4AF65] bg-[#D4AF65]/10 border border-[#D4AF65]/30 hover:bg-[#D4AF65]/20 transition-colors"
+              disabled={isBranchingVersion}
+              onClick={handleCreateNewVersion}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#D4AF65] bg-[#D4AF65]/10 border border-[#D4AF65]/30 hover:bg-[#D4AF65]/20 transition-colors disabled:opacity-50"
             >
-              Edit as New Version (v{proposal.version + 1})
+              <span>📑</span>
+              {isBranchingVersion
+                ? "Branching Version..."
+                : `Create New Version (v${proposal.version + 1})`}
             </button>
           )}
 
@@ -507,6 +535,23 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
             </p>
           </div>
         </div>
+
+        {/* Predecessor Lineage Banner */}
+        {proposal.deliverables?.predecessorVersion && (
+          <div className="bg-[#111318] border border-white/[0.08] rounded-xl px-4 py-2.5 flex items-center justify-between text-xs text-[#9298A3]">
+            <span>
+              Branched from predecessor proposal <strong className="text-[#F5F3ED] font-mono">v{proposal.deliverables.predecessorVersion}</strong>.
+            </span>
+            {proposal.deliverables.predecessorProposalId && (
+              <Link
+                href={`/projects/${projectId}/proposals/${proposal.deliverables.predecessorProposalId}`}
+                className="text-[#D4AF65] hover:underline font-mono"
+              >
+                View v{proposal.deliverables.predecessorVersion} &rarr;
+              </Link>
+            )}
+          </div>
+        )}
 
         {feedbackMsg && (
           <div

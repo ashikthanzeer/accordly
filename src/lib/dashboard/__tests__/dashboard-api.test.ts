@@ -100,6 +100,58 @@ describe("Dashboard & Timeline API Endpoints", () => {
       expect(data.recentProjects).toHaveLength(1);
       expect(data.recentActivity).toHaveLength(1);
     });
+
+    it("excludes ARCHIVED projects from active projects listing and active KPI counts", async () => {
+      const mockProjects = [
+        {
+          id: "proj_active",
+          name: "Active App",
+          clientName: "Active Client",
+          currency: "USD",
+          status: "ACTIVE",
+          updatedAt: new Date(),
+          baselines: [],
+          requests: [],
+          changeOrders: [],
+          invoices: [],
+        },
+        {
+          id: "proj_archived",
+          name: "Old Archived Work",
+          clientName: "Old Client",
+          currency: "USD",
+          status: "ARCHIVED",
+          archivedAt: new Date(),
+          archivedBy: "usr_demo_provider",
+          updatedAt: new Date(),
+          baselines: [],
+          requests: [],
+          changeOrders: [
+            { id: "prop_archived_wait", status: "APPROVED" },
+          ],
+          invoices: [
+            { id: "inv_archived_unpaid", status: "SENT", amount: "500.00", currency: "USD" },
+          ],
+        },
+      ];
+
+      vi.mocked(prisma.project.findMany).mockResolvedValueOnce(mockProjects as any);
+      vi.mocked(prisma.projectEvent.findMany).mockResolvedValueOnce([]);
+
+      const req = new NextRequest("http://localhost:3000/api/dashboard/overview");
+      const res = await handleDashboardGet(req);
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(data.kpis.activeProjectsCount).toBe(1);
+      expect(data.kpis.totalProjectsCount).toBe(2);
+      // Pending approvals & unpaid invoices on archived project must not pollute active KPIs
+      expect(data.kpis.pendingApprovalsCount).toBe(0);
+      expect(data.kpis.outstandingInvoicesCount).toBe(0);
+      // Recent projects on active dashboard must exclude archived projects
+      expect(data.recentProjects).toHaveLength(1);
+      expect(data.recentProjects[0].id).toBe("proj_active");
+    });
   });
 
   describe("GET /api/projects/[id]/timeline", () => {

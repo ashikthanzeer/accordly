@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { ScopeBaselineSchema } from "@/lib/ai/schema";
 import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
 import { resolveOwnedProject, projectNotFoundResponse } from "@/lib/auth/ownership";
+import { isProjectArchived, projectArchivedResponse } from "@/lib/projects/lifecycle";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -24,6 +25,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const project = await resolveOwnedProject(projectId, user.id);
     if (!project) {
       return projectNotFoundResponse(projectId);
+    }
+
+    if (isProjectArchived(project.status)) {
+      return projectArchivedResponse("req_confirm", projectId, project.name);
     }
 
     const body = await req.json();

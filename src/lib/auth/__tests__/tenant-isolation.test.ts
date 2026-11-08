@@ -230,7 +230,7 @@ describe("Multi-Tenant Authorization & IDOR Isolation", () => {
       expect(res.status).toBe(200);
       expect(mockProjectFindMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { ownerId: "usr_provider_a" },
+          where: expect.objectContaining({ ownerId: "usr_provider_a" }),
         })
       );
     });
@@ -246,7 +246,7 @@ describe("Multi-Tenant Authorization & IDOR Isolation", () => {
 
       expect(mockProjectFindMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { ownerId: "usr_provider_a" },
+          where: expect.objectContaining({ ownerId: "usr_provider_a" }),
         })
       );
       expect(mockProjectEventFindMany).toHaveBeenCalledWith(

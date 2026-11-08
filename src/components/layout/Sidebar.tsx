@@ -2,9 +2,10 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AnimatedAccordlyLogo } from "@/components/brand/AnimatedAccordlyLogo";
 import { CreateProjectModal } from "@/components/projects/CreateProjectModal";
+import { ArchiveProjectModal } from "@/components/projects/ArchiveProjectModal";
 
 interface SidebarUser {
   id: string;
@@ -31,7 +32,9 @@ export function Sidebar({
   onSignOut,
 }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
+  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
 
   const isCurrent = (path: string) => {
     if (path === "/" && pathname === "/") return true;
@@ -179,6 +182,15 @@ export function Sidebar({
                   <span>⏱️</span>
                   Activity Timeline
                 </Link>
+
+                <button
+                  type="button"
+                  onClick={() => setIsArchiveModalOpen(true)}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[#9298A3] hover:text-[#E06C75] hover:bg-white/[0.04] transition-all text-left"
+                >
+                  <span>📦</span>
+                  Archive Project
+                </button>
               </nav>
             </div>
           )}
@@ -250,6 +262,19 @@ export function Sidebar({
         isOpen={isCreateProjectOpen}
         onClose={() => setIsCreateProjectOpen(false)}
       />
+
+      {projectId && (
+        <ArchiveProjectModal
+          isOpen={isArchiveModalOpen}
+          onClose={() => setIsArchiveModalOpen(false)}
+          projectId={projectId}
+          projectName={projectName || "Project"}
+          onArchived={() => {
+            router.push("/");
+            router.refresh();
+          }}
+        />
+      )}
     </>
   );
 }

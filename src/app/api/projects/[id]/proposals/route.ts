@@ -10,6 +10,7 @@ import type { ProposalPricingInput } from "@/lib/pricing/schema";
 import type { ChangeRequestAnalysisResult } from "@/lib/ai/classifier-schema";
 import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
 import { resolveOwnedProject, projectNotFoundResponse } from "@/lib/auth/ownership";
+import { isProjectArchived, projectArchivedResponse } from "@/lib/projects/lifecycle";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -83,6 +84,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const project = await resolveOwnedProject(projectId, user.id);
     if (!project) {
       return NextResponse.json({ error: "Project not found." }, { status: 404 });
+    }
+
+    if (isProjectArchived(project.status)) {
+      return projectArchivedResponse("req_prop", projectId, project.name);
     }
 
     // 2. Verify change request

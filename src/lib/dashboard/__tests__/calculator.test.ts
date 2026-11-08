@@ -124,8 +124,8 @@ describe("Dashboard Calculator & Aggregator", () => {
 
       expect(kpis.totalProjectsCount).toBe(2);
       expect(kpis.activeProjectsCount).toBe(1);
-      expect(kpis.pendingApprovalsCount).toBe(2); // 1 SENT_TO_CLIENT + 1 APPROVED
-      expect(kpis.outstandingInvoicesCount).toBe(1); // 1 SENT
+      expect(kpis.pendingApprovalsCount).toBe(1); // 1 SENT_TO_CLIENT on active project (archived project excluded)
+      expect(kpis.outstandingInvoicesCount).toBe(1); // 1 SENT on active project
     });
   });
 

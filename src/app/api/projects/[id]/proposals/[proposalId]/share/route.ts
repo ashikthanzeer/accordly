@@ -4,6 +4,7 @@ import { generateSecureReviewToken } from "@/lib/proposals/tokens";
 import { getPublicReviewUrl } from "@/lib/config/urls";
 import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
 import { isProjectOwnedByUser } from "@/lib/auth/ownership";
+import { isProjectArchived, projectArchivedResponse } from "@/lib/projects/lifecycle";
 
 interface RouteParams {
   params: Promise<{ id: string; proposalId: string }>;
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       where: { id: proposalId, projectId },
       include: {
         project: {
-          select: { ownerId: true, name: true, clientName: true, clientEmail: true },
+          select: { ownerId: true, name: true, clientName: true, clientEmail: true, status: true },
         },
       },
     });
@@ -42,6 +43,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         { error: "Proposal not found." },
         { status: 404 }
       );
+    }
+
+    if (isProjectArchived((proposal as any).project?.status)) {
+      return projectArchivedResponse("req_share", projectId, (proposal as any).project?.name);
     }
 
     // Only APPROVED or already SENT proposals can generate a review link

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
 import { isProjectOwnedByUser } from "@/lib/auth/ownership";
+import { isProjectArchived, projectArchivedResponse } from "@/lib/projects/lifecycle";
 
 interface RouteParams {
   params: Promise<{ id: string; proposalId: string }>;
@@ -35,6 +36,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         { error: "Proposal not found." },
         { status: 404 }
       );
+    }
+
+    if (isProjectArchived((proposal as any).project?.status)) {
+      return projectArchivedResponse("req_wdr", projectId, (proposal as any).project?.name);
     }
 
     if (proposal.status === "WITHDRAWN") {

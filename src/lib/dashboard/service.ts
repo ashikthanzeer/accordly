@@ -27,6 +27,10 @@ export function detectActionRequiredItems(projects: any[]): ActionRequiredItem[]
   const items: ActionRequiredItem[] = [];
 
   for (const project of projects) {
+    if ((project.status || "").toUpperCase() === "ARCHIVED") {
+      continue;
+    }
+
     const projectId = project.id;
     const projectName = project.name;
 
@@ -199,8 +203,12 @@ export async function getDashboardOverview(
   const actionRequiredItems = detectActionRequiredItems(projects);
   const scopeDriftRadar = computeScopeDriftRadar(projects, filters);
 
-  // Recent projects summary cards
-  const recentProjects: ProjectCardSummary[] = projects.map((p) => {
+  // Recent projects summary cards (active workspace only)
+  const activeProjects = projects.filter(
+    (p) => (p.status || "").toUpperCase() === "ACTIVE"
+  );
+
+  const recentProjects: ProjectCardSummary[] = activeProjects.map((p) => {
     const hasConfirmedBaseline = Array.isArray(p.baselines)
       ? p.baselines.some((b) => b.confirmedAt !== null)
       : false;

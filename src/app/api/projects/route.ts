@@ -7,6 +7,7 @@ import {
   logDiagnostic,
 } from "@/lib/logger";
 import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
+import { getProjectFinancialSummary } from "@/lib/projects/lifecycle";
 
 function serializeProject(project: {
   id: string;
@@ -18,6 +19,8 @@ function serializeProject(project: {
   pricingModel: string;
   hourlyRate: unknown;
   status: string;
+  archivedAt?: Date | null;
+  archivedBy?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }): ProjectSummaryDto {
@@ -34,6 +37,8 @@ function serializeProject(project: {
         ? Number(project.hourlyRate)
         : null,
     status: project.status,
+    archivedAt: project.archivedAt ? project.archivedAt.toISOString() : null,
+    archivedBy: project.archivedBy || null,
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString(),
   };
@@ -52,14 +57,38 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const statusParam = req.nextUrl?.searchParams?.get("status")?.trim().toUpperCase();
+    const whereClause: any = { ownerId: user.id };
+
+    if (statusParam === "ARCHIVED") {
+      whereClause.status = "ARCHIVED";
+    } else if (statusParam === "ALL") {
+      // include all project lifecycle states
+    } else {
+      // Default to ACTIVE
+      whereClause.status = "ACTIVE";
+    }
+
     const projects = await prisma.project.findMany({
-      where: { ownerId: user.id },
+      where: whereClause,
+      include: {
+        invoices: true,
+      },
       orderBy: { updatedAt: "desc" },
     });
 
     return NextResponse.json(
       {
-        projects: projects.map(serializeProject),
+        projects: projects.map((p) => {
+          const serialized = serializeProject(p);
+          if (p.status === "ARCHIVED") {
+            return {
+              ...serialized,
+              financialSummary: getProjectFinancialSummary(p),
+            };
+          }
+          return serialized;
+        }),
       },
       { status: 200 }
     );

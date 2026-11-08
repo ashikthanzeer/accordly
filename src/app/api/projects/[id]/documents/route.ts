@@ -20,6 +20,7 @@ import {
 } from "@/lib/logger";
 import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
 import { isProjectOwnedByUser, projectNotFoundResponse } from "@/lib/auth/ownership";
+import { isProjectArchived, projectArchivedResponse } from "@/lib/projects/lifecycle";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -75,6 +76,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         },
         { status: 404 }
       );
+    }
+
+    if (isProjectArchived(project.status)) {
+      return projectArchivedResponse(correlationId, projectId, project.name);
     }
 
     // 2. Parse multipart/form-data

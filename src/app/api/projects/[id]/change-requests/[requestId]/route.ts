@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
 import { resolveOwnedProject, projectNotFoundResponse } from "@/lib/auth/ownership";
+import { isProjectArchived, projectArchivedResponse } from "@/lib/projects/lifecycle";
 
 interface RouteParams {
   params: Promise<{ id: string; requestId: string }>;
@@ -64,6 +65,10 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     const project = await resolveOwnedProject(projectId, user.id);
     if (!project) {
       return projectNotFoundResponse(projectId);
+    }
+
+    if (isProjectArchived(project.status)) {
+      return projectArchivedResponse("req_cr_patch", projectId, project.name);
     }
 
     const body = await req.json();

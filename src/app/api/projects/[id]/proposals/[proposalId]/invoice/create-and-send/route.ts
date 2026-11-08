@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAndSendProposalInvoice } from "@/lib/paypal";
 import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
 import { resolveOwnedProject, projectNotFoundResponse } from "@/lib/auth/ownership";
+import { isProjectArchived, projectArchivedResponse } from "@/lib/projects/lifecycle";
 
 interface RouteParams {
   params: Promise<{ id: string; proposalId: string }>;
@@ -23,6 +24,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const project = await resolveOwnedProject(projectId, user.id);
     if (!project) {
       return projectNotFoundResponse(projectId);
+    }
+
+    if (isProjectArchived(project.status)) {
+      return projectArchivedResponse("req_inv_send", projectId, project.name);
     }
 
     const body = await req.json().catch(() => ({}));

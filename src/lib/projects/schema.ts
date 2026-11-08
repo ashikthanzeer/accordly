@@ -87,6 +87,43 @@ export interface ProjectSummaryDto {
   pricingModel: PricingModel | string;
   hourlyRate: number | null;
   status: string;
+  archivedAt?: string | null;
+  archivedBy?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export const ProjectLifecycleStatusSchema = z.enum(["ACTIVE", "ARCHIVED"]);
+export type ProjectLifecycleStatus = z.infer<typeof ProjectLifecycleStatusSchema>;
+
+export const ProjectListFilterSchema = z.enum(["ACTIVE", "ARCHIVED", "ALL"]);
+export type ProjectListFilter = z.infer<typeof ProjectListFilterSchema>;
+
+export interface ProjectFinancialCurrencySummary {
+  currency: string;
+  totalInvoiced: number;
+  formattedTotalInvoiced: string;
+  totalCollected: number;
+  formattedTotalCollected: string;
+  totalOutstanding: number;
+  formattedTotalOutstanding: string;
+  invoiceCount: number;
+  paidCount: number;
+}
+
+export interface ProjectFinancialSummary {
+  hasPaymentActivity: boolean;
+  primaryCurrency: string;
+  currencies: string[];
+  byCurrency: Record<string, ProjectFinancialCurrencySummary>;
+  totalInvoiced: number;
+  formattedTotalInvoiced: string;
+  totalCollected: number;
+  formattedTotalCollected: string;
+  totalOutstanding: number;
+  formattedTotalOutstanding: string;
+}
+
+export interface ArchivedProjectDetailDto extends ProjectSummaryDto {
+  financialSummary: ProjectFinancialSummary;
 }

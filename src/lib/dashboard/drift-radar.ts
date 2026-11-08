@@ -203,8 +203,9 @@ export function computeScopeDriftRadar(
     const clientName = project.clientName || "Client";
     const projectCurrency = (project.currency || "USD").trim().toUpperCase();
     const projectStatus = (project.status || "ACTIVE").trim().toUpperCase();
+    const isProjectActive = projectStatus === "ACTIVE";
 
-    if (projectStatus === "ACTIVE") {
+    if (isProjectActive) {
       globalMetrics.activeEngagementsCount += 1;
     }
 
@@ -365,36 +366,40 @@ export function computeScopeDriftRadar(
       // Check unresolved status and generate request-level alerts
       if (cls === "OUT_OF_SCOPE" && !hasProposal) {
         projUnresolvedRequests += 1;
-        driftAlerts.push({
-          id: `drift_oos_${req.id}`,
-          type: "OUT_OF_SCOPE_WITHOUT_PROPOSAL",
-          severity: "HIGH",
-          title: "Out-of-Scope Request Without Commercial Proposal",
-          description: `"${snippet}" was classified as OUT_OF_SCOPE in ${projectName}, but no commercial proposal has been generated.`,
-          rationale: "Delivering out-of-scope work without a priced change order causes direct revenue leakage.",
-          projectId,
-          projectName,
-          resourceId: req.id,
-          href: `/projects/${projectId}/requests`,
-        });
+        if (isProjectActive) {
+          driftAlerts.push({
+            id: `drift_oos_${req.id}`,
+            type: "OUT_OF_SCOPE_WITHOUT_PROPOSAL",
+            severity: "HIGH",
+            title: "Out-of-Scope Request Without Commercial Proposal",
+            description: `"${snippet}" was classified as OUT_OF_SCOPE in ${projectName}, but no commercial proposal has been generated.`,
+            rationale: "Delivering out-of-scope work without a priced change order causes direct revenue leakage.",
+            projectId,
+            projectName,
+            resourceId: req.id,
+            href: `/projects/${projectId}/requests`,
+          });
+        }
       } else if (cls === "AMBIGUOUS" && reviewStatus !== "REVIEWED" && !hasProposal) {
         projUnresolvedRequests += 1;
-        driftAlerts.push({
-          id: `drift_amb_${req.id}`,
-          type: "AMBIGUOUS_REQUIRING_REVIEW",
-          severity: "MEDIUM",
-          title: "Ambiguous Request Requiring Provider Review",
-          description: `"${snippet}" in ${projectName} has contractual ambiguity and awaits provider sign-off or clarification.`,
-          rationale: "The baseline agreement is silent or ambiguous on this requirement; provider review is required before proceeding.",
-          projectId,
-          projectName,
-          resourceId: req.id,
-          href: `/projects/${projectId}/requests`,
-        });
+        if (isProjectActive) {
+          driftAlerts.push({
+            id: `drift_amb_${req.id}`,
+            type: "AMBIGUOUS_REQUIRING_REVIEW",
+            severity: "MEDIUM",
+            title: "Ambiguous Request Requiring Provider Review",
+            description: `"${snippet}" in ${projectName} has contractual ambiguity and awaits provider sign-off or clarification.`,
+            rationale: "The baseline agreement is silent or ambiguous on this requirement; provider review is required before proceeding.",
+            projectId,
+            projectName,
+            resourceId: req.id,
+            href: `/projects/${projectId}/requests`,
+          });
+        }
       }
     }
 
-    if (projUnresolvedRequests >= 2) {
+    if (isProjectActive && projUnresolvedRequests >= 2) {
       driftAlerts.push({
         id: `drift_multi_unres_${projectId}`,
         type: "MULTIPLE_UNRESOLVED_CHANGE_REQUESTS",
@@ -456,18 +461,20 @@ export function computeScopeDriftRadar(
         globalBucket.proposedCents += amountCents;
         globalBucket.approvedCents += amountCents;
 
-        driftAlerts.push({
-          id: `drift_prop_wait_${prop.id}`,
-          type: "PROPOSAL_AWAITING_CLIENT_ACCEPTANCE",
-          severity: "MEDIUM",
-          title: `Proposal v${prop.version} Awaiting Client Acceptance`,
-          description: `Approved proposal v${prop.version} (${formatCurrency(fromCents(amountCents), propCurrency)}) in ${projectName} has not yet been accepted by the client.`,
-          rationale: "Provider-approved proposals do not become billable contract amendments until explicitly accepted by the client.",
-          projectId,
-          projectName,
-          resourceId: prop.id,
-          href: `/projects/${projectId}/proposals/${prop.id}`,
-        });
+        if (isProjectActive) {
+          driftAlerts.push({
+            id: `drift_prop_wait_${prop.id}`,
+            type: "PROPOSAL_AWAITING_CLIENT_ACCEPTANCE",
+            severity: "MEDIUM",
+            title: `Proposal v${prop.version} Awaiting Client Acceptance`,
+            description: `Approved proposal v${prop.version} (${formatCurrency(fromCents(amountCents), propCurrency)}) in ${projectName} has not yet been accepted by the client.`,
+            rationale: "Provider-approved proposals do not become billable contract amendments until explicitly accepted by the client.",
+            projectId,
+            projectName,
+            resourceId: prop.id,
+            href: `/projects/${projectId}/proposals/${prop.id}`,
+          });
+        }
       } else if (pStatus === "CLIENT_ACCEPTED") {
         projAcceptedProposals += 1;
         globalMetrics.providerApprovedProposalsCount += 1;
@@ -497,7 +504,7 @@ export function computeScopeDriftRadar(
           ? propInvoices.find((inv: any) => (inv?.status || "").trim().toUpperCase() === "DRAFT")
           : null;
 
-        if (!activeBillableInvoice) {
+        if (isProjectActive && !activeBillableInvoice) {
           driftAlerts.push({
             id: `drift_acc_no_inv_${prop.id}`,
             type: "ACCEPTED_PROPOSAL_WITHOUT_INVOICE",
@@ -537,7 +544,7 @@ export function computeScopeDriftRadar(
       projCollectedCents += settlement.collectedCents;
       projOutstandingCents += settlement.outstandingCents;
 
-      if (settlement.outstandingCents > 0) {
+      if (isProjectActive && settlement.outstandingCents > 0) {
         const invStatus = (inv.status || "SENT").trim().toUpperCase();
         const isOverdue = invStatus === "OVERDUE";
         driftAlerts.push({

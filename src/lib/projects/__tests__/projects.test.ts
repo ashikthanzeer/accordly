@@ -5,7 +5,10 @@ import {
   POST as handleCreateProject,
   GET as handleListProjects,
 } from "../../../app/api/projects/route";
-import { GET as handleGetProjectById } from "../../../app/api/projects/[id]/route";
+import {
+  GET as handleGetProjectById,
+  DELETE as handleDeleteProject,
+} from "../../../app/api/projects/[id]/route";
 import { prisma } from "@/lib/db";
 
 vi.mock("@/lib/auth/session", () => ({
@@ -260,6 +263,21 @@ describe("Project Creation & Retrieval API Routes", () => {
       params: Promise.resolve({ id: "proj_unknown" }),
     });
     expect(missingRes.status).toBe(404);
+  });
+
+  it("DELETE /api/projects/[id] universally rejects permanent deletion with HTTP 405 Method Not Allowed", async () => {
+    const delReq = new NextRequest("http://localhost:3000/api/projects/proj_existing", {
+      method: "DELETE",
+    });
+    const delRes = await handleDeleteProject(delReq, {
+      params: Promise.resolve({ id: "proj_existing" }),
+    });
+    const data = await delRes.json();
+
+    expect(delRes.status).toBe(405);
+    expect(data.code).toBe("PERMANENT_DELETION_PROHIBITED");
+    expect(data.archiveEndpoint).toBe("/api/projects/proj_existing/archive");
+    expect(data.error).toContain("Permanent project deletion is prohibited");
   });
 });
 

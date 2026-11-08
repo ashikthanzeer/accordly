@@ -77,6 +77,8 @@ model Project {
   pricingModel String         @default("HOURLY")
   hourlyRate   Decimal?       @db.Decimal(10, 2)
   status       String         @default("ACTIVE")
+  archivedAt   DateTime?
+  archivedBy   String?
   documents    Document[]
   baselines    ScopeBaseline[]
   requests     ChangeRequest[]

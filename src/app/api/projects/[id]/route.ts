@@ -7,6 +7,7 @@ import {
 } from "@/lib/logger";
 import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
 import { isProjectOwnedByUser } from "@/lib/auth/ownership";
+import { getProjectFinancialSummary } from "@/lib/projects/lifecycle";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -28,6 +29,9 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const project = await prisma.project.findUnique({
       where: { id: projectId },
+      include: {
+        invoices: true,
+      },
     });
 
     if (!project || !isProjectOwnedByUser(project.ownerId, user.id)) {
@@ -51,6 +55,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       );
     }
 
+    const financialSummary = getProjectFinancialSummary(project);
+
     return NextResponse.json(
       {
         project: {
@@ -66,9 +72,12 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
               ? Number(project.hourlyRate)
               : null,
           status: project.status,
+          archivedAt: (project as any).archivedAt ? (project as any).archivedAt.toISOString() : null,
+          archivedBy: (project as any).archivedBy || null,
           createdAt: project.createdAt.toISOString(),
           updatedAt: project.updatedAt.toISOString(),
         },
+        financialSummary,
       },
       { status: 200 }
     );
@@ -94,4 +103,45 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * DELETE /api/projects/[id]
+ * Universal Permanent Deletion Prohibition Safeguard.
+ *
+ * Permanently deleting projects is strictly prohibited in Accordly to preserve
+ * binding commercial, baseline, change request, invoice, and payment audit trails.
+ * Projects can only be archived via POST /api/projects/[id]/archive.
+ */
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
+  const correlationId = createCorrelationId();
+  const { id: projectId } = await params;
+
+  logDiagnostic({
+    level: "warn",
+    operation: "project.delete",
+    correlationId,
+    projectId,
+    stage: "request.reject",
+    category: "validation",
+    message: `Rejected permanent deletion attempt for project "${projectId}". Projects may only be archived.`,
+    statusCode: 405,
+  });
+
+  return NextResponse.json(
+    {
+      error: "Permanent project deletion is prohibited. Accordly retains full commercial and payment history indefinitely. To remove this project from your active workspace, please archive it via POST /api/projects/[id]/archive.",
+      code: "PERMANENT_DELETION_PROHIBITED",
+      allowedAlternative: "ARCHIVE",
+      archiveEndpoint: `/api/projects/${projectId}/archive`,
+      projectId,
+      correlationId,
+    },
+    {
+      status: 405,
+      headers: {
+        Allow: "GET, POST",
+      },
+    }
+  );
 }

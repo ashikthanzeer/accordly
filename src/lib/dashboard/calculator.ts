@@ -148,28 +148,21 @@ export function calculateDashboardKpis(
   let outstandingInvoicesCount = 0;
 
   for (const project of projects) {
-    if ((project.status || "").toUpperCase() === "ACTIVE") {
+    const isProjActive = (project.status || "").toUpperCase() === "ACTIVE";
+    if (isProjActive) {
       activeProjectsCount += 1;
     }
 
-    if (Array.isArray(project.changeOrders)) {
+    if (isProjActive && Array.isArray(project.changeOrders)) {
       for (const proposal of project.changeOrders) {
         const pStatus = (proposal.status || "").toUpperCase();
-        // Awaiting provider approval or client decision
-        if (
-          pStatus === "SENT_TO_CLIENT" ||
-          pStatus === "APPROVED" ||
-          pStatus === "PROVIDER_APPROVED" ||
-          pStatus === "DRAFT"
-        ) {
-          if (pStatus === "SENT_TO_CLIENT" || pStatus === "APPROVED") {
-            pendingApprovalsCount += 1;
-          }
+        if (pStatus === "SENT_TO_CLIENT" || pStatus === "APPROVED") {
+          pendingApprovalsCount += 1;
         }
       }
     }
 
-    if (Array.isArray(project.invoices)) {
+    if (isProjActive && Array.isArray(project.invoices)) {
       for (const invoice of project.invoices) {
         const iStatus = (invoice.status || "").toUpperCase();
         if (

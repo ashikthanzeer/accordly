@@ -8,9 +8,11 @@ import { ScopeDriftRadar } from "@/components/dashboard/ScopeDriftRadar";
 import { FinancialOverview } from "@/components/dashboard/FinancialOverview";
 import { ActionRequiredList } from "@/components/dashboard/ActionRequiredList";
 import { ProjectGrid } from "@/components/dashboard/ProjectGrid";
+import { ArchivedProjectGrid } from "@/components/dashboard/ArchivedProjectGrid";
 import { RecentActivityFeed } from "@/components/dashboard/RecentActivityFeed";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { CreateProjectModal } from "@/components/projects/CreateProjectModal";
+import type { ArchivedProjectDetailDto } from "@/lib/projects/schema";
 import type {
   DashboardOverviewResponse,
   ScopeDriftFilterInput,
@@ -22,6 +24,9 @@ export default function HomePage() {
   const [isFilteringRadar, setIsFilteringRadar] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
+  const [lifecycleTab, setLifecycleTab] = useState<"ACTIVE" | "ARCHIVED">("ACTIVE");
+  const [archivedProjects, setArchivedProjects] = useState<ArchivedProjectDetailDto[]>([]);
+  const [isArchivedLoading, setIsArchivedLoading] = useState(false);
   const [radarFilters, setRadarFilters] = useState<ScopeDriftFilterInput>({
     projectId: "ALL",
     dateRange: "ALL",
@@ -80,6 +85,27 @@ export default function HomePage() {
     fetchOverview(radarFilters, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const fetchArchivedProjects = useCallback(async () => {
+    setIsArchivedLoading(true);
+    try {
+      const res = await fetch("/api/projects?status=ARCHIVED");
+      if (res.ok) {
+        const json = await res.json();
+        setArchivedProjects(json.projects || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch archived projects:", err);
+    } finally {
+      setIsArchivedLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (lifecycleTab === "ARCHIVED") {
+      fetchArchivedProjects();
+    }
+  }, [lifecycleTab, fetchArchivedProjects]);
 
   const handleRadarFiltersChange = (nextFilters: ScopeDriftFilterInput) => {
     setRadarFilters(nextFilters);
@@ -211,11 +237,70 @@ export default function HomePage() {
                 currencies={data.currencies}
               />
 
-              {/* Active Engagements Project Grid */}
-              <ProjectGrid
-                projects={data.recentProjects}
-                onCreateProject={() => setIsCreateProjectOpen(true)}
-              />
+              {/* Project Lifecycle Workspace Segmented Control & Grid */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 p-1 rounded-xl bg-white/[0.03] border border-white/[0.08] max-w-fit">
+                  <button
+                    type="button"
+                    onClick={() => setLifecycleTab("ACTIVE")}
+                    className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      lifecycleTab === "ACTIVE"
+                        ? "bg-[#D4AF65] text-[#090A0C] shadow-sm"
+                        : "text-[#9298A3] hover:text-[#F5F3ED]"
+                    }`}
+                  >
+                    <span>Active Engagements</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
+                        lifecycleTab === "ACTIVE"
+                          ? "bg-black/20 text-[#090A0C]"
+                          : "bg-white/[0.08] text-[#9298A3]"
+                      }`}
+                    >
+                      {data.recentProjects?.length || 0}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setLifecycleTab("ARCHIVED")}
+                    className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      lifecycleTab === "ARCHIVED"
+                        ? "bg-[#D4AF65] text-[#090A0C] shadow-sm"
+                        : "text-[#9298A3] hover:text-[#F5F3ED]"
+                    }`}
+                  >
+                    <span>Archived Projects</span>
+                    {archivedProjects.length > 0 && (
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
+                          lifecycleTab === "ARCHIVED"
+                            ? "bg-black/20 text-[#090A0C]"
+                            : "bg-white/[0.08] text-[#9298A3]"
+                        }`}
+                      >
+                        {archivedProjects.length}
+                      </span>
+                    )}
+                  </button>
+                </div>
+
+                {lifecycleTab === "ACTIVE" ? (
+                  <ProjectGrid
+                    projects={data.recentProjects}
+                    onCreateProject={() => setIsCreateProjectOpen(true)}
+                  />
+                ) : (
+                  <ArchivedProjectGrid
+                    projects={archivedProjects}
+                    isLoading={isArchivedLoading}
+                    onProjectRestored={() => {
+                      fetchOverview(radarFilters, false);
+                      fetchArchivedProjects();
+                    }}
+                  />
+                )}
+              </div>
             </div>
 
             {/* Right Column (Recent Activity & Quick Links) */}

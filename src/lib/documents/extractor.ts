@@ -9,6 +9,8 @@ import fs from "node:fs/promises";
 import { extractText, getDocumentProxy } from "unpdf";
 
 export class DocumentExtractionError extends Error {
+  public readonly statusCode = 422;
+
   constructor(message: string) {
     super(`[DocumentExtractionError] ${message}`);
     this.name = "DocumentExtractionError";
@@ -31,27 +33,44 @@ export interface ExtractedDocumentResult {
 const MIN_CHARACTERS_REQUIRED = 20;
 
 /**
+ * Converts a Node.js Buffer or Uint8Array into a standalone pure Uint8Array
+ * backed by an independent ArrayBuffer (required by unpdf / pdfjs-dist, which
+ * rejects Node Buffer instances even though Buffer extends Uint8Array).
+ */
+export function toPureUint8Array(input: Buffer | Uint8Array): Uint8Array {
+  const view = new Uint8Array(input.buffer, input.byteOffset, input.byteLength);
+  return view.slice();
+}
+
+/**
  * Extracts text from a PDF buffer, preserving page numbers.
  */
 export async function extractTextFromPdf(
   buffer: Buffer | Uint8Array
 ): Promise<ExtractedDocumentResult> {
-  const uint8 = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+  const uint8 = toPureUint8Array(buffer);
 
-  let pdfProxy;
+  let totalPages: number;
+  let pageTexts: string[];
   try {
-    pdfProxy = await getDocumentProxy(uint8);
+    const pdfProxy = await getDocumentProxy(uint8);
+    const extracted = await extractText(pdfProxy, {
+      mergePages: false,
+    });
+    totalPages = extracted.totalPages;
+    pageTexts = Array.isArray(extracted.text)
+      ? extracted.text
+      : [String(extracted.text ?? "")];
   } catch (err: unknown) {
+    if (err instanceof DocumentExtractionError) {
+      throw err;
+    }
     throw new DocumentExtractionError(
       `Failed to parse PDF document structure: ${
         err instanceof Error ? err.message : String(err)
       }`
     );
   }
-
-  const { totalPages, text: pageTexts } = await extractText(pdfProxy, {
-    mergePages: false,
-  });
 
   const pageChunks: DocumentPageChunk[] = [];
   const textParts: string[] = [];
@@ -157,4 +176,3 @@ export async function extractTextFromFile(
   const buffer = await fs.readFile(filePath);
   return extractDocumentText(buffer, mimeType);
 }
-

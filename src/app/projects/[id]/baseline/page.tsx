@@ -7,6 +7,7 @@ import { DocumentUpload, type UploadedDocument } from "@/components/agreements/D
 import { ScopeBaselineReview } from "@/components/baseline/ScopeBaselineReview";
 import { GlassCard } from "@/components/ui/GlassCard";
 import type { StructuredScopeBaseline } from "@/lib/ai/schema";
+import type { ProjectSummaryDto } from "@/lib/projects/schema";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -16,6 +17,7 @@ export default function ProjectBaselinePage({ params }: PageProps) {
   const resolvedParams = use(params);
   const projectId = resolvedParams.id;
 
+  const [projectInfo, setProjectInfo] = useState<ProjectSummaryDto | null>(null);
   const [uploadedDoc, setUploadedDoc] = useState<UploadedDocument | null>(null);
   const [draftBaseline, setDraftBaseline] = useState<StructuredScopeBaseline | null>(null);
   const [confirmedBaseline, setConfirmedBaseline] = useState<any | null>(null);
@@ -28,14 +30,27 @@ export default function ProjectBaselinePage({ params }: PageProps) {
     isMock?: boolean;
   }>({});
 
-  // Fetch initial baseline status on load
+  // Fetch initial project metadata & baseline status on load
   useEffect(() => {
     async function loadStatus() {
       try {
-        const res = await fetch(`/api/projects/${projectId}/baseline`);
-        const data = await res.json();
-        if (data.hasConfirmedBaseline && data.baseline) {
-          setConfirmedBaseline(data.baseline);
+        const [projRes, baseRes] = await Promise.all([
+          fetch(`/api/projects/${projectId}`),
+          fetch(`/api/projects/${projectId}/baseline`),
+        ]);
+
+        if (projRes.ok) {
+          const projData = await projRes.json();
+          if (projData.project) {
+            setProjectInfo(projData.project);
+          }
+        }
+
+        if (baseRes.ok) {
+          const data = await baseRes.json();
+          if (data.hasConfirmedBaseline && data.baseline) {
+            setConfirmedBaseline(data.baseline);
+          }
         }
       } catch (err) {
         console.error("Error loading baseline status:", err);
@@ -128,12 +143,14 @@ export default function ProjectBaselinePage({ params }: PageProps) {
     </div>
   );
 
+  const displayProjectLabel = projectInfo?.name || `Project: ${projectId}`;
+
   return (
     <AppShell
       projectId={projectId}
-      projectName={`Project: ${projectId}`}
+      projectName={displayProjectLabel}
       breadcrumbs={[
-        { label: `Project: ${projectId}`, href: `/projects/${projectId}/baseline` },
+        { label: displayProjectLabel, href: `/projects/${projectId}/baseline` },
         { label: "Scope Baseline", active: true },
       ]}
       actions={quickNavActions}
@@ -143,14 +160,19 @@ export default function ProjectBaselinePage({ params }: PageProps) {
         <GlassCard intensity="prominent" className="p-6 lg:p-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-bold tracking-widest text-[#D4AF65] uppercase font-mono">
                   AGREEMENT INGESTION & BASELINE
                 </span>
                 <span className="w-1.5 h-1.5 rounded-full bg-[#43B581] animate-pulse" />
+                {projectInfo && (
+                  <span className="text-[11px] font-mono text-[#9298A3] bg-white/[0.04] border border-white/[0.08] px-2 py-0.5 rounded-md">
+                    {projectInfo.clientName} &bull; {projectInfo.currency} ({projectInfo.pricingModel})
+                  </span>
+                )}
               </div>
               <h1 className="text-2xl font-extrabold tracking-tight text-[#F5F3ED] mt-1">
-                Contract Baseline & Extraction
+                {projectInfo ? `${projectInfo.name} — Contract Baseline` : "Contract Baseline & Extraction"}
               </h1>
               <p className="text-xs text-[#9298A3] mt-1">
                 Upload the original signed agreement to extract and confirm the foundational scope baseline.

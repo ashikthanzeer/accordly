@@ -7,35 +7,60 @@ import { GlassCard } from "@/components/ui/GlassCard";
 
 interface ProjectGridProps {
   projects: ProjectCardSummary[];
+  onCreateProject?: () => void;
 }
 
-export function ProjectGrid({ projects }: ProjectGridProps) {
+export function ProjectGrid({ projects, onCreateProject }: ProjectGridProps) {
   if (projects.length === 0) {
     return (
-      <GlassCard intensity="subtle" className="p-8 text-center space-y-3">
+      <GlassCard intensity="subtle" className="p-8 text-center space-y-4">
         <div className="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.08] text-2xl mx-auto flex items-center justify-center text-[#9298A3] shadow-sm">
           📁
         </div>
-        <h3 className="text-sm font-bold text-[#F5F3ED]">No Projects Found</h3>
-        <p className="text-xs text-[#9298A3] max-w-sm mx-auto leading-relaxed">
-          Start your Scope-to-Cash workflow by uploading a client agreement and establishing your first confirmed scope baseline.
-        </p>
+        <div className="space-y-1.5">
+          <h3 className="text-sm font-bold text-[#F5F3ED]">No Projects Found</h3>
+          <p className="text-xs text-[#9298A3] max-w-sm mx-auto leading-relaxed">
+            Start your Scope-to-Cash workflow by creating a client project, uploading an agreement, and establishing your confirmed scope baseline.
+          </p>
+        </div>
+        {onCreateProject && (
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={onCreateProject}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-[#090A0C] bg-[#D4AF65] hover:bg-[#E2C17F] hover:shadow-[0_0_16px_rgba(212,175,101,0.35)] transition-all shadow-sm active:scale-95"
+            >
+              <span>+ Create Project</span>
+            </button>
+          </div>
+        )}
       </GlassCard>
     );
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-bold text-[#F5F3ED]">Active Engagements</h2>
           <p className="text-xs text-[#9298A3]">
             Commercial overview across active client projects.
           </p>
         </div>
-        <span className="text-xs text-[#9298A3] font-mono">
-          {projects.length} {projects.length === 1 ? "project" : "projects"}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-[#9298A3] font-mono">
+            {projects.length} {projects.length === 1 ? "project" : "projects"}
+          </span>
+          {onCreateProject && (
+            <button
+              type="button"
+              onClick={onCreateProject}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#D4AF65] hover:text-[#090A0C] bg-[#D4AF65]/10 hover:bg-[#D4AF65] border border-[#D4AF65]/30 transition-all"
+            >
+              <span>+ New Project</span>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -52,8 +77,15 @@ export function ProjectGrid({ projects }: ProjectGridProps) {
                     <Link href={`/projects/${project.id}/baseline`}>{project.name}</Link>
                   </h3>
                   <p className="text-xs text-[#9298A3] mt-0.5">
-                    Client: <span className="font-semibold text-[#F5F3ED]">{project.clientName}</span>{" "}
-                    <span className="font-mono text-[11px] text-[#9298A3]">({project.clientEmail})</span>
+                    Client: <span className="font-semibold text-[#F5F3ED]">{project.clientName}</span>
+                    {project.clientEmail ? (
+                      <>
+                        {" "}
+                        <span className="font-mono text-[11px] text-[#9298A3]">
+                          ({project.clientEmail})
+                        </span>
+                      </>
+                    ) : null}
                   </p>
                 </div>
 

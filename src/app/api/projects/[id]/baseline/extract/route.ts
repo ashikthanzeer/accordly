@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { extractScopeBaseline, ScopeExtractionError } from "@/lib/ai";
+import {
+  extractScopeBaseline,
+  ScopeExtractionError,
+  AiProviderError,
+} from "@/lib/ai";
+import {
+  createCorrelationId,
+  extractPrismaCode,
+  logDiagnostic,
+} from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -11,9 +20,10 @@ interface RouteParams {
  * Triggers AI scope extraction on an uploaded document and returns draft baseline data.
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
-  try {
-    const { id: projectId } = await params;
+  const correlationId = createCorrelationId();
+  const { id: projectId } = await params;
 
+  try {
     let body: { documentId?: string; directText?: string } = {};
     try {
       body = await req.json();
@@ -36,10 +46,23 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           });
 
       if (!document || !document.extractedText) {
+        logDiagnostic({
+          level: "warn",
+          operation: "baseline.extract",
+          correlationId,
+          projectId,
+          stage: "document.lookup",
+          category: "not_found",
+          message: "No readable document found for scope extraction.",
+          statusCode: 404,
+          metadata: { documentId: documentId || null },
+        });
+
         return NextResponse.json(
           {
             error:
               "No readable document found for this project. Please upload an agreement first.",
+            correlationId,
           },
           { status: 404 }
         );
@@ -68,6 +91,23 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       },
     });
 
+    logDiagnostic({
+      level: "info",
+      operation: "baseline.extract",
+      correlationId,
+      projectId,
+      stage: "complete",
+      category: "success",
+      message: `Extracted draft scope baseline (${result.baseline.deliverables.length} deliverables).`,
+      statusCode: 200,
+      metadata: {
+        documentId: documentId || null,
+        provider: result.provider,
+        model: result.model,
+        isMock: result.isMock,
+      },
+    });
+
     return NextResponse.json({
       success: true,
       status: "DRAFT_REVIEW",
@@ -81,23 +121,78 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     });
   } catch (err: unknown) {
     if (err instanceof ScopeExtractionError) {
+      logDiagnostic({
+        level: "warn",
+        operation: "baseline.extract",
+        correlationId,
+        projectId,
+        stage: "ai.validate",
+        category: "extraction",
+        message: err.message,
+        statusCode: 422,
+        error: err,
+      });
+
       return NextResponse.json(
         {
           error: err.message,
           validationErrors: err.validationErrors,
+          correlationId,
         },
         { status: 422 }
       );
     }
+
+    if (err instanceof AiProviderError) {
+      const status =
+        err.statusCode === 503 ||
+        err.statusCode === 429 ||
+        err.message.includes("Missing")
+          ? 503
+          : 502;
+
+      logDiagnostic({
+        level: "error",
+        operation: "baseline.extract",
+        correlationId,
+        projectId,
+        stage: "ai.provider",
+        category: "ai_provider",
+        message: err.message,
+        statusCode: status,
+        error: err,
+      });
+
+      return NextResponse.json(
+        {
+          error: `AI provider error during scope extraction: ${err.message}`,
+          correlationId,
+        },
+        { status }
+      );
+    }
+
+    const prismaCode = extractPrismaCode(err);
+    logDiagnostic({
+      level: "error",
+      operation: "baseline.extract",
+      correlationId,
+      projectId,
+      stage: prismaCode ? "db.persist" : "unexpected",
+      category: prismaCode ? "database" : "unexpected",
+      message: err instanceof Error ? err.message : String(err),
+      statusCode: 500,
+      error: err,
+    });
 
     return NextResponse.json(
       {
         error: `Scope extraction failed: ${
           err instanceof Error ? err.message : String(err)
         }`,
+        correlationId,
       },
       { status: 500 }
     );
   }
 }
-

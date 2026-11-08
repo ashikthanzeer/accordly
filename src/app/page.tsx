@@ -9,14 +9,16 @@ import { ActionRequiredList } from "@/components/dashboard/ActionRequiredList";
 import { ProjectGrid } from "@/components/dashboard/ProjectGrid";
 import { RecentActivityFeed } from "@/components/dashboard/RecentActivityFeed";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { CreateProjectModal } from "@/components/projects/CreateProjectModal";
 import type { DashboardOverviewResponse } from "@/lib/dashboard/types";
 
 export default function HomePage() {
   const [data, setData] = useState<DashboardOverviewResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
 
-  const defaultProjectId = "demo-project-01";
+  const defaultProjectId = data?.recentProjects?.[0]?.id || "demo-project-01";
 
   const fetchOverview = async () => {
     setIsLoading(true);
@@ -50,9 +52,17 @@ export default function HomePage() {
         <span>Refresh</span>
       </button>
 
+      <button
+        type="button"
+        onClick={() => setIsCreateProjectOpen(true)}
+        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#090A0C] bg-[#D4AF65] hover:bg-[#E2C17F] hover:shadow-[0_0_16px_rgba(212,175,101,0.35)] transition-all shadow-sm shadow-[#D4AF65]/15 active:scale-95"
+      >
+        <span>+ New Project</span>
+      </button>
+
       <Link
         href={`/projects/${defaultProjectId}/baseline`}
-        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#090A0C] bg-[#D4AF65] hover:bg-[#E2C17F] hover:shadow-[0_0_16px_rgba(212,175,101,0.35)] transition-all shadow-sm shadow-[#D4AF65]/15"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#D4AF65] hover:text-[#F5F3ED] bg-[#D4AF65]/10 hover:bg-[#D4AF65]/20 transition-all border border-[#D4AF65]/30"
       >
         <span>+ Contract Baseline</span>
       </Link>
@@ -143,7 +153,10 @@ export default function HomePage() {
               />
 
               {/* Active Engagements Project Grid */}
-              <ProjectGrid projects={data.recentProjects} />
+              <ProjectGrid
+                projects={data.recentProjects}
+                onCreateProject={() => setIsCreateProjectOpen(true)}
+              />
             </div>
 
             {/* Right Column (Recent Activity & Quick Links) */}
@@ -197,6 +210,14 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      <CreateProjectModal
+        isOpen={isCreateProjectOpen}
+        onClose={() => setIsCreateProjectOpen(false)}
+        onProjectCreated={() => {
+          fetchOverview();
+        }}
+      />
     </AppShell>
   );
 }

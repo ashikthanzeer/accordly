@@ -267,7 +267,7 @@ Accordly employs a distributed production topology:
 5. Add the **Environment Variables** in Render:
    - `DATABASE_URL`: Your NeonDB pooled connection URL.
    - `DIRECT_URL`: Your NeonDB direct connection URL.
-   - `STORAGE_DIR`: `/var/data/uploads` (points to the attached persistent disk).
+   - `STORAGE_DIR`: `/var/data/uploads` (points to the attached persistent disk; automatically falls back to `./uploads/documents` or `os.tmpdir()/accordly-uploads` if no disk is mounted).
    - `NEXT_PUBLIC_APP_URL`: `https://<your-vercel-domain>.vercel.app` (ensures review links target Vercel).
    - `PAYPAL_ENV`: `sandbox`
    - `PAYPAL_BASE_URL`: `https://api-m.sandbox.paypal.com`
@@ -276,7 +276,7 @@ Accordly employs a distributed production topology:
    - `PAYPAL_WEBHOOK_ID`: *(Obtained in Step 4 below)*.
    - `AI_PROVIDER`: `gemini` (or `openai` / `mock`).
    - `GEMINI_API_KEY`: Your Google Gemini API Key.
-   - `AI_MODEL`: `gemini-1.5-flash`
+   - `AI_MODEL`: `gemini-2.0-flash`
    - `NODE_ENV`: `production`
 6. Click **Deploy Web Service** and note your Render service URL: `https://accordly-api.onrender.com`.
 
@@ -344,7 +344,7 @@ Accordly employs a distributed production topology:
 | `PAYPAL_WEBHOOK_ID` | Render | Yes | Webhook listener ID issued by PayPal | `4WH12345ABCDE` |
 | `AI_PROVIDER` | Render | Yes | AI engine (`gemini`, `openai`, `mock`) | `gemini` |
 | `GEMINI_API_KEY` | Render | Optional | Google Gemini API key (Keep Secret!) | `AQ.Ab8RN6...` |
-| `AI_MODEL` | Render | Optional | Gemini model identifier | `gemini-1.5-flash` |
+| `AI_MODEL` | Render | Optional | Gemini model identifier | `gemini-2.0-flash` |
 | `CORS_ALLOWED_ORIGINS`| Render | Optional | Whitelisted origins if direct browser access is used | `https://accordly.vercel.app` |
 | `NODE_ENV` | Both | Yes | Node execution environment | `production` |
 

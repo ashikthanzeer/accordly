@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatedAccordlyLogo } from "@/components/brand/AnimatedAccordlyLogo";
+import { CreateProjectModal } from "@/components/projects/CreateProjectModal";
 
 interface SidebarProps {
   projectId?: string;
@@ -19,6 +20,7 @@ export function Sidebar({
   onMobileClose,
 }: SidebarProps) {
   const pathname = usePathname();
+  const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
 
   const isCurrent = (path: string) => {
     if (path === "/" && pathname === "/") return true;
@@ -86,6 +88,20 @@ export function Sidebar({
                 </svg>
                 Executive Dashboard
               </Link>
+
+              <button
+                type="button"
+                onClick={() => {
+                  onMobileClose?.();
+                  setIsCreateProjectOpen(true);
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-[#D4AF65] hover:text-[#090A0C] bg-[#D4AF65]/10 hover:bg-[#D4AF65] border border-[#D4AF65]/30 transition-all text-left"
+              >
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                </svg>
+                New Project
+              </button>
             </nav>
           </div>
 
@@ -194,6 +210,11 @@ export function Sidebar({
           </div>
         </div>
       </aside>
+
+      <CreateProjectModal
+        isOpen={isCreateProjectOpen}
+        onClose={() => setIsCreateProjectOpen(false)}
+      />
     </>
   );
 }

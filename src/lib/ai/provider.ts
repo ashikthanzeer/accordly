@@ -87,15 +87,18 @@ export async function completePrompt(
 
 /**
  * Calls Gemini Generative Language API via direct HTTPS fetch.
+ * Automatically falls back to gemini-2.0-flash if a legacy model name (e.g. gemini-1.5-flash) returns 404.
  */
 async function callGemini(
   apiKey: string,
   model: string,
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  allowFallback = true
 ): Promise<AiCompletionResult> {
+  const cleanModel = model.replace(/^models\//, "").trim() || "gemini-2.0-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-    model
+    cleanModel
   )}:generateContent?key=${apiKey}`;
 
   const body = {
@@ -122,10 +125,16 @@ async function callGemini(
       body: JSON.stringify(body),
     });
   } catch (err: unknown) {
-    throw new AiProviderError(`Network error contacting Gemini API: ${err instanceof Error ? err.message : String(err)}`);
+    throw new AiProviderError(
+      `Network error contacting Gemini API: ${err instanceof Error ? err.message : String(err)}`,
+      503
+    );
   }
 
   if (!res.ok) {
+    if (res.status === 404 && allowFallback && cleanModel !== "gemini-2.0-flash") {
+      return callGemini(apiKey, "gemini-2.0-flash", systemPrompt, userPrompt, false);
+    }
     const errorText = await res.text();
     throw new AiProviderError(`Gemini API returned error ${res.status}: ${errorText}`, res.status);
   }
@@ -142,13 +151,13 @@ async function callGemini(
   const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
   if (!content) {
-    throw new AiProviderError("Gemini response did not contain text content.");
+    throw new AiProviderError("Gemini response did not contain text content.", 502);
   }
 
   return {
     content,
     provider: "gemini",
-    model,
+    model: cleanModel,
     isMock: false,
   };
 }

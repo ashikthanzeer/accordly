@@ -341,6 +341,57 @@ export function VisualScopeComparison({
             })}
           </div>
         )}
+
+        {/* Explicit Separation: AI Assessment vs. Provider Review & Override */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-white/[0.08] text-xs">
+          <div className="bg-[#090A0C]/80 border border-white/[0.08] rounded-xl p-4 space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#9298A3]">
+                Immutable AI Scope Assessment
+              </span>
+              <span className="text-[11px] font-mono font-bold text-[#D4AF65]">
+                {model.aiAssessment.classification} ({model.aiAssessment.confidence})
+              </span>
+            </div>
+            <p className="text-[#F5F3ED]/90 leading-relaxed">
+              {model.aiAssessment.summary}
+            </p>
+          </div>
+
+          <div className="bg-[#090A0C]/80 border border-white/[0.08] rounded-xl p-4 space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#9298A3]">
+                Provider Review & Commercial Override
+              </span>
+              <span
+                className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                  model.providerDecision.hasProviderOverride
+                    ? "bg-[#D4AF65]/15 text-[#D4AF65] border-[#D4AF65]/30"
+                    : model.providerDecision.reviewStatus === "REVIEWED"
+                    ? "bg-[#43B581]/15 text-[#43B581] border-[#43B581]/30"
+                    : "bg-white/[0.05] text-[#9298A3] border-white/[0.1]"
+                }`}
+              >
+                {model.providerDecision.hasProviderOverride
+                  ? "PROVIDER OVERRIDE ACTIVE"
+                  : model.providerDecision.reviewStatus}
+              </span>
+            </div>
+            {model.providerDecision.overrideJustification ? (
+              <p className="text-[#D4AF65] font-mono text-[11px]">
+                Override Justification: &ldquo;{model.providerDecision.overrideJustification}&rdquo;
+              </p>
+            ) : model.providerDecision.providerNotes ? (
+              <p className="text-[#F5F3ED]/90">
+                Provider Notes: &ldquo;{model.providerDecision.providerNotes}&rdquo;
+              </p>
+            ) : (
+              <p className="text-[#9298A3] italic">
+                No provider override applied. AI assessment stands as the active classification.
+              </p>
+            )}
+          </div>
+        </div>
       </GlassCard>
     </div>
   );

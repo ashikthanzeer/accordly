@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { GlassCard } from "@/components/ui/GlassCard";
 import {
@@ -51,6 +51,15 @@ export function ProposalVersionComparison({
 
   const [baseId, setBaseId] = useState<string>(defaultBaseId);
   const [targetId, setTargetId] = useState<string>(defaultTargetId);
+
+  useEffect(() => {
+    if (!baseId || !sortedAscending.some((p) => p.id === baseId)) {
+      setBaseId(defaultBaseId);
+    }
+    if (!targetId || !sortedAscending.some((p) => p.id === targetId)) {
+      setTargetId(defaultTargetId);
+    }
+  }, [defaultBaseId, defaultTargetId, sortedAscending, baseId, targetId]);
 
   const baseProposal =
     sortedAscending.find((p) => p.id === baseId) || sortedAscending[0];
@@ -268,11 +277,16 @@ export function ProposalVersionComparison({
                   onChange={(e) => setBaseId(e.target.value)}
                   className="bg-[#111318] border border-white/[0.12] rounded-lg px-2.5 py-1.5 text-xs text-[#F5F3ED] focus:outline-none focus:border-[#D4AF65]"
                 >
-                  {sortedAscending.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      v{p.version} ({p.status}) — {formatCurrency(Number(p.amount), p.currency)}
-                    </option>
-                  ))}
+                  {sortedAscending.map((p) => {
+                    const snap = p.status !== "DRAFT" ? p.deliverables?.approvedSnapshot : null;
+                    const amt = Number(snap?.amount ?? p.amount ?? 0);
+                    const curr = snap?.currency || p.currency || "USD";
+                    return (
+                      <option key={p.id} value={p.id}>
+                        v{p.version} ({p.status}) — {formatCurrency(amt, curr)}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 
@@ -286,11 +300,16 @@ export function ProposalVersionComparison({
                   onChange={(e) => setTargetId(e.target.value)}
                   className="bg-[#111318] border border-white/[0.12] rounded-lg px-2.5 py-1.5 text-xs text-[#F5F3ED] focus:outline-none focus:border-[#D4AF65]"
                 >
-                  {sortedAscending.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      v{p.version} ({p.status}) — {formatCurrency(Number(p.amount), p.currency)}
-                    </option>
-                  ))}
+                  {sortedAscending.map((p) => {
+                    const snap = p.status !== "DRAFT" ? p.deliverables?.approvedSnapshot : null;
+                    const amt = Number(snap?.amount ?? p.amount ?? 0);
+                    const curr = snap?.currency || p.currency || "USD";
+                    return (
+                      <option key={p.id} value={p.id}>
+                        v{p.version} ({p.status}) — {formatCurrency(amt, curr)}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             </div>

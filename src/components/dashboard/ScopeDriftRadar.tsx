@@ -206,6 +206,7 @@ export function ScopeDriftRadar({
           <option value="ALL">All Invoice Statuses</option>
           <option value="UNPAID">Unpaid / Awaiting Settlement</option>
           <option value="SENT">Sent</option>
+          <option value="OVERDUE">Overdue</option>
           <option value="PARTIALLY_PAID">Partially Paid</option>
           <option value="PAID">Paid & Reconciled</option>
         </select>
@@ -365,7 +366,7 @@ export function ScopeDriftRadar({
               {pipeline.formattedProviderApprovedValue}
             </span>
             <span className="text-[10px] text-[#9298A3] block">
-              Locked snapshots (not yet accepted)
+              Locked snapshots (approved & accepted)
             </span>
           </div>
 

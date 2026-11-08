@@ -243,6 +243,225 @@ describe("Scope Drift Radar Engine (src/lib/dashboard/drift-radar.ts)", () => {
     expect(byClassification.globalMetrics.totalChangeRequestsCount).toBe(2);
     expect(byClassification.globalMetrics.inScopeCount).toBe(0);
     expect(byClassification.globalMetrics.outOfScopeCount).toBe(2);
+    // Only proposals linked to OUT_OF_SCOPE requests should be counted when filtering by classification
+    expect(byClassification.globalMetrics.clientAcceptedProposalsCount).toBe(1);
+    expect(byClassification.pipelineByCurrency["USD"].additionalProposedValue).toBe(2500);
+  });
+
+  it("correctly handles all proposal and invoice lifecycle states without double-counting", () => {
+    const complexProject = [
+      {
+        id: "proj_fin_audit",
+        name: "Financial Invariant Audit",
+        clientName: "FinCorp",
+        currency: "USD",
+        status: "ACTIVE",
+        updatedAt: new Date().toISOString(),
+        baselines: [],
+        requests: [
+          {
+            id: "req_rejected_only",
+            sourceText: "Add blockchain integration",
+            classification: "OUT_OF_SCOPE",
+            analysis: { reviewStatus: "REVIEWED" },
+            createdAt: new Date().toISOString(),
+          },
+          {
+            id: "req_rev_within",
+            sourceText: "Minor copy revision",
+            classification: "REVISION_WITHIN_LIMIT",
+            analysis: { reviewStatus: "REVIEWED" },
+            createdAt: new Date().toISOString(),
+          },
+          {
+            id: "req_rev_exceeds",
+            sourceText: "Fourth major redesign revision",
+            classification: "REVISION_EXCEEDS_LIMIT",
+            analysis: { reviewStatus: "REVIEWED" },
+            createdAt: new Date().toISOString(),
+          },
+          {
+            id: "req_clarification",
+            sourceText: "Unspecified hosting setup",
+            classification: "CLARIFICATION_NEEDED",
+            analysis: { reviewStatus: "PENDING_REVIEW" },
+            createdAt: new Date().toISOString(),
+          },
+        ],
+        changeOrders: [
+          // 1. DRAFT proposal ($500) -> counts in Proposed only
+          {
+            id: "prop_draft",
+            version: 1,
+            status: "DRAFT",
+            amount: "500.00",
+            currency: "USD",
+          },
+          // 2. APPROVED proposal ($1000, snapshot $1000) -> counts in Proposed & Provider-Approved
+          {
+            id: "prop_approved",
+            version: 2,
+            status: "APPROVED",
+            amount: "9999.00", // Tampered top-level amount; snapshot should win
+            deliverables: {
+              approvedSnapshot: { amount: 1000, currency: "USD" },
+            },
+            currency: "USD",
+          },
+          // 3. CLIENT_REJECTED proposal ($4000) -> counts in Proposed & Provider-Approved, NOT Client-Accepted, and does NOT resolve req_rejected_only
+          {
+            id: "prop_rejected",
+            changeRequestId: "req_rejected_only",
+            version: 3,
+            status: "CLIENT_REJECTED",
+            amount: "4000.00",
+            currency: "USD",
+          },
+          // 4. SUPERSEDED ($2000) & WITHDRAWN ($3000) -> excluded from ALL financial pipeline metrics
+          {
+            id: "prop_superseded",
+            version: 4,
+            status: "SUPERSEDED",
+            amount: "2000.00",
+            currency: "USD",
+          },
+          {
+            id: "prop_withdrawn",
+            version: 5,
+            status: "WITHDRAWN",
+            amount: "3000.00",
+            currency: "USD",
+          },
+          // 5. CLIENT_ACCEPTED proposal with only a DRAFT (unsent) invoice ($1500) -> triggers ACCEPTED_PROPOSAL_WITHOUT_INVOICE
+          {
+            id: "prop_acc_unsent_inv",
+            changeRequestId: "req_rev_exceeds",
+            version: 6,
+            status: "CLIENT_ACCEPTED",
+            amount: "1500.00",
+            currency: "USD",
+            invoices: [
+              {
+                id: "inv_draft",
+                paypalInvoiceId: "INV2-DRAFT-1",
+                changeOrderId: "prop_acc_unsent_inv",
+                status: "DRAFT",
+                currency: "USD",
+                amount: "1500.00",
+              },
+            ],
+          },
+          // 6. CLIENT_ACCEPTED proposal with PAID invoice ($2000), SENT invoice ($800), OVERDUE invoice ($600), CANCELLED invoice ($900)
+          {
+            id: "prop_acc_paid",
+            version: 7,
+            status: "CLIENT_ACCEPTED",
+            amount: "3400.00",
+            currency: "USD",
+          },
+        ],
+        invoices: [
+          // Unsent DRAFT invoice -> NOT counted in Invoiced or Outstanding
+          {
+            id: "inv_draft",
+            paypalInvoiceId: "INV2-DRAFT-1",
+            changeOrderId: "prop_acc_unsent_inv",
+            status: "DRAFT",
+            currency: "USD",
+            amount: "1500.00",
+          },
+          // Cancelled invoice -> NOT counted in Invoiced, Collected, or Outstanding
+          {
+            id: "inv_cancelled",
+            paypalInvoiceId: "INV2-CANC-1",
+            changeOrderId: "prop_acc_paid",
+            status: "CANCELLED",
+            currency: "USD",
+            amount: "900.00",
+          },
+          // Fully PAID invoice ($2000) + duplicate entry with same paypalInvoiceId (simulating duplicate webhook/join)
+          {
+            id: "inv_paid_1",
+            paypalInvoiceId: "INV2-PAID-1",
+            changeOrderId: "prop_acc_paid",
+            status: "PAID",
+            currency: "USD",
+            amount: "2000.00",
+          },
+          {
+            id: "inv_paid_1_dup",
+            paypalInvoiceId: "INV2-PAID-1",
+            changeOrderId: "prop_acc_paid",
+            status: "PAID",
+            currency: "USD",
+            amount: "2000.00",
+          },
+          // SENT unpaid invoice ($800)
+          {
+            id: "inv_sent_1",
+            paypalInvoiceId: "INV2-SENT-1",
+            changeOrderId: "prop_acc_paid",
+            status: "SENT",
+            currency: "USD",
+            amount: "800.00",
+          },
+          // OVERDUE unpaid invoice ($600)
+          {
+            id: "inv_overdue_1",
+            paypalInvoiceId: "INV2-OVERDUE-1",
+            changeOrderId: "prop_acc_paid",
+            status: "OVERDUE",
+            currency: "USD",
+            amount: "600.00",
+          },
+        ],
+      },
+    ];
+
+    const radar = computeScopeDriftRadar(complexProject);
+
+    // Classification normalization check:
+    // IN_SCOPE: req_rev_within (1)
+    // OUT_OF_SCOPE: req_rejected_only + req_rev_exceeds (2)
+    // AMBIGUOUS: req_clarification (1)
+    expect(radar.globalMetrics.inScopeCount).toBe(1);
+    expect(radar.globalMetrics.outOfScopeCount).toBe(2);
+    expect(radar.globalMetrics.ambiguousCount).toBe(1);
+
+    const usd = radar.pipelineByCurrency["USD"];
+    // Proposed = 500 (draft) + 1000 (approved snapshot) + 1500 (accepted1) + 3400 (accepted2) = 6400
+    // (Excludes 4000 CLIENT_REJECTED, 2000 SUPERSEDED, and 3000 WITHDRAWN)
+    expect(usd.additionalProposedValue).toBe(6400);
+    // Provider-approved = 1000 (approved) + 1500 (accepted1) + 3400 (accepted2) = 5900
+    expect(usd.providerApprovedValue).toBe(5900);
+    // Client-accepted = 1500 + 3400 = 4900
+    expect(usd.clientAcceptedValue).toBe(4900);
+    // Invoiced = 2000 (paid, deduplicated) + 800 (sent) + 600 (overdue) = 3400 (excludes 1500 DRAFT and 900 CANCELLED)
+    expect(usd.additionalInvoicedValue).toBe(3400);
+    // Collected = 2000 (paid, deduplicated)
+    expect(usd.additionalRevenueCollected).toBe(2000);
+    // Outstanding = 800 (sent) + 600 (overdue) = 1400
+    expect(usd.outstandingAdditionalPayments).toBe(1400);
+
+    // Alerts check:
+    // req_rejected_only only has CLIENT_REJECTED proposal -> must still trigger OUT_OF_SCOPE_WITHOUT_PROPOSAL
+    const oosAlert = radar.driftAlerts.find(
+      (a) => a.type === "OUT_OF_SCOPE_WITHOUT_PROPOSAL" && a.resourceId === "req_rejected_only"
+    );
+    expect(oosAlert).toBeDefined();
+
+    // prop_acc_unsent_inv only has DRAFT invoice -> must still trigger ACCEPTED_PROPOSAL_WITHOUT_INVOICE
+    const noInvAlert = radar.driftAlerts.find(
+      (a) => a.type === "ACCEPTED_PROPOSAL_WITHOUT_INVOICE" && a.resourceId === "prop_acc_unsent_inv"
+    );
+    expect(noInvAlert).toBeDefined();
+
+    // UNPAID filter must match both SENT and OVERDUE invoices
+    const unpaidFiltered = computeScopeDriftRadar(complexProject, {
+      invoiceStatus: "UNPAID",
+    });
+    expect(unpaidFiltered.pipelineByCurrency["USD"].additionalInvoicedValue).toBe(1400);
+    expect(unpaidFiltered.pipelineByCurrency["USD"].outstandingAdditionalPayments).toBe(1400);
   });
 
   it("handles empty projects state safely without errors", () => {

@@ -33,6 +33,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           select: {
             id: true,
             fileName: true,
+            extractedText: true,
             createdAt: true,
           },
         },
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({
-      hasConfirmedBaseline: true,
+      hasConfirmedBaseline: Boolean(latestBaseline.confirmedAt ?? true),
       baseline: latestBaseline,
     });
   } catch (err: unknown) {

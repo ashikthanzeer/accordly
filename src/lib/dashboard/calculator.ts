@@ -27,13 +27,28 @@ export function aggregateFinancialsByCurrency(
 
   if (!Array.isArray(invoices)) return summaries;
 
+  const seenInvoiceKeys = new Set<string>();
+
   for (const inv of invoices) {
     if (!inv) continue;
 
+    const dedupeKey = String((inv as any).paypalInvoiceId || inv.id || "");
+    if (dedupeKey && seenInvoiceKeys.has(dedupeKey)) {
+      continue;
+    }
+    if (dedupeKey) {
+      seenInvoiceKeys.add(dedupeKey);
+    }
+
     const status = (inv.status || "UNKNOWN").trim().toUpperCase();
 
-    // Exclude drafts (unsent) and cancelled invoices
-    if (status === "DRAFT" || status === "CANCELLED") {
+    // Exclude drafts (unsent), cancelled, refunded, and unknown invoices
+    if (
+      status === "DRAFT" ||
+      status === "CANCELLED" ||
+      status === "REFUNDED" ||
+      status === "UNKNOWN"
+    ) {
       continue;
     }
 
@@ -161,7 +176,9 @@ export function calculateDashboardKpis(
           iStatus === "SENT" ||
           iStatus === "PARTIALLY_PAID" ||
           iStatus === "PAYMENT_PENDING" ||
-          iStatus === "UNPAID"
+          iStatus === "UNPAID" ||
+          iStatus === "OVERDUE" ||
+          iStatus === "MARKED_AS_UNPAID"
         ) {
           outstandingInvoicesCount += 1;
         }

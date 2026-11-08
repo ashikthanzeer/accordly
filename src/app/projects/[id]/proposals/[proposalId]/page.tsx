@@ -143,6 +143,15 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
   const isWithdrawn = proposal?.status === "WITHDRAWN";
   const isReadOnly = !isDraft;
 
+  const syncProposalState = (updated: any) => {
+    setProposal(updated);
+    setAllProposals((prev) =>
+      prev.some((p) => p.id === updated.id)
+        ? prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
+        : [updated, ...prev]
+    );
+  };
+
   const handleSaveDraft = async () => {
     if (!isDraft) return;
     setIsSaving(true);
@@ -168,7 +177,7 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to save proposal.");
 
-      setProposal(data.proposal);
+      syncProposalState(data.proposal);
       setFeedbackMsg({ type: "success", text: "Proposal draft saved successfully." });
     } catch (err: unknown) {
       setFeedbackMsg({
@@ -240,7 +249,7 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to approve proposal.");
 
-      setProposal(data.proposal);
+      syncProposalState(data.proposal);
       setShowApprovalModal(false);
       setFeedbackMsg({
         type: "success",
@@ -270,7 +279,7 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to withdraw proposal.");
 
-      setProposal(data.proposal);
+      syncProposalState(data.proposal);
       setFeedbackMsg({ type: "success", text: "Proposal has been marked as WITHDRAWN." });
     } catch (err: unknown) {
       setFeedbackMsg({
@@ -294,7 +303,7 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to revoke link.");
-      setProposal(data.proposal);
+      syncProposalState(data.proposal);
       setFeedbackMsg({ type: "success", text: "Client review link has been revoked." });
     } catch (err: unknown) {
       setFeedbackMsg({

@@ -94,11 +94,17 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
         ? String(body.providerNotes)
         : (existingAnalysis.providerNotes as string | undefined) || "";
 
+    const providerOverride =
+      body?.providerOverride !== undefined
+        ? body.providerOverride
+        : existingAnalysis.providerOverride;
+
     const updatedAnalysis = {
       ...existingAnalysis,
       reviewStatus,
       reviewedAt,
       providerNotes,
+      ...(providerOverride ? { providerOverride } : {}),
     };
 
     const updated = await prisma.changeRequest.update({

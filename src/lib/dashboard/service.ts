@@ -11,6 +11,7 @@ import {
   calculateDashboardKpis,
 } from "./calculator";
 import { computeScopeDriftRadar } from "./drift-radar";
+import { sanitizeEventMetadata } from "@/lib/timeline/service";
 import type {
   ActionRequiredItem,
   DashboardOverviewResponse,
@@ -107,9 +108,15 @@ export function detectActionRequiredItems(projects: any[]): ActionRequiredItem[]
           });
         } else if (status === "CLIENT_ACCEPTED") {
           const invoices = Array.isArray(prop.invoices) ? prop.invoices : [];
-          const activeInvoice = invoices.find(
-            (inv: any) => (inv.status || "").toUpperCase() !== "CANCELLED"
-          );
+          const activeInvoice = invoices.find((inv: any) => {
+            const st = (inv.status || "").toUpperCase();
+            return (
+              st !== "CANCELLED" &&
+              st !== "REFUNDED" &&
+              st !== "DRAFT" &&
+              st !== "UNKNOWN"
+            );
+          });
 
           if (!activeInvoice) {
             items.push({
@@ -243,7 +250,7 @@ export async function getDashboardOverview(
     actorType: evt.actorType,
     eventType: evt.eventType,
     description: evt.description,
-    metadata: (evt.metadata as Record<string, any>) || undefined,
+    metadata: sanitizeEventMetadata(evt.metadata),
     createdAt: evt.createdAt.toISOString(),
     formattedTime: formatRelativeTime(evt.createdAt),
   }));

@@ -125,6 +125,30 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Persist provider override / commercial justification on the change request's analysis
+    // while strictly preserving the original AI classification and evidence.
+    if (allowInScopeOverride || (providerJustification && providerJustification.length > 0)) {
+      const existingAnalysisObj =
+        changeRequest.analysis && typeof changeRequest.analysis === "object"
+          ? (changeRequest.analysis as Record<string, unknown>)
+          : {};
+      await prisma.changeRequest.update({
+        where: { id: changeRequestId },
+        data: {
+          analysis: {
+            ...existingAnalysisObj,
+            reviewStatus: "REVIEWED",
+            reviewedAt: (existingAnalysisObj.reviewedAt as string) || new Date().toISOString(),
+            providerOverride: {
+              overriddenAt: new Date().toISOString(),
+              justification: providerJustification || "Provider override enabled for proposal generation.",
+              allowInScopeOverride,
+            },
+          } as any,
+        },
+      });
+    }
+
     // 5. Generate AI draft proposal content
     const draftContent = await draftProposalContent({
       clientRequest: changeRequest.sourceText,

@@ -68,6 +68,25 @@ function ensureCurrencyPipeline(
 }
 
 /**
+ * Normalizes classification strings so neither tri-state values nor
+ * granular revision/clarification labels are silently misclassified.
+ */
+export function normalizeScopeClassification(
+  rawClassification: unknown
+): "IN_SCOPE" | "OUT_OF_SCOPE" | "AMBIGUOUS" {
+  const cls = String(rawClassification || "")
+    .trim()
+    .toUpperCase();
+  if (cls === "IN_SCOPE" || cls === "REVISION_WITHIN_LIMIT") {
+    return "IN_SCOPE";
+  }
+  if (cls === "OUT_OF_SCOPE" || cls === "REVISION_EXCEEDS_LIMIT") {
+    return "OUT_OF_SCOPE";
+  }
+  return "AMBIGUOUS";
+}
+
+/**
  * Extracts paid and outstanding cents from an invoice record.
  */
 function computeInvoiceSettlementCents(inv: any): {
@@ -77,7 +96,12 @@ function computeInvoiceSettlementCents(inv: any): {
   isBillable: boolean;
 } {
   const status = (inv?.status || "UNKNOWN").trim().toUpperCase();
-  if (status === "DRAFT" || status === "CANCELLED" || status === "REFUNDED") {
+  if (
+    status === "DRAFT" ||
+    status === "CANCELLED" ||
+    status === "REFUNDED" ||
+    status === "UNKNOWN"
+  ) {
     return { invoicedCents: 0, collectedCents: 0, outstandingCents: 0, isBillable: false };
   }
 
@@ -120,7 +144,7 @@ function computeInvoiceSettlementCents(inv: any): {
     };
   }
 
-  // SENT, PAYMENT_PENDING, UNPAID, etc.
+  // SENT, OVERDUE, PAYMENT_PENDING, UNPAID, MARKED_AS_UNPAID, etc.
   return {
     invoicedCents: amountCents,
     collectedCents: 0,
@@ -199,10 +223,17 @@ export function computeScopeDriftRadar(
 
     // Filter change requests
     const allRequests = Array.isArray(project.requests) ? project.requests : [];
+    const requestClassById = new Map<string, "IN_SCOPE" | "OUT_OF_SCOPE" | "AMBIGUOUS">();
+    for (const r of allRequests) {
+      if (r?.id) {
+        requestClassById.set(r.id, normalizeScopeClassification(r.classification));
+      }
+    }
+
     const matchingRequests = allRequests.filter((req: any) => {
       if (!req) return false;
       if (!isWithinDateRange(req.createdAt, filters.dateRange, referenceNow)) return false;
-      const cls = (req.classification || "").trim().toUpperCase();
+      const cls = normalizeScopeClassification(req.classification);
       if (filters.classification && filters.classification !== "ALL" && cls !== filters.classification) {
         return false;
       }
@@ -214,6 +245,18 @@ export function computeScopeDriftRadar(
     const matchingProposals = allProposals.filter((prop: any) => {
       if (!prop) return false;
       if (!isWithinDateRange(prop.createdAt, filters.dateRange, referenceNow)) return false;
+
+      if (filters.classification && filters.classification !== "ALL") {
+        const linkedCls = prop.changeRequestId
+          ? requestClassById.get(prop.changeRequestId)
+          : prop.deliverables?.originatingClassification
+          ? normalizeScopeClassification(prop.deliverables.originatingClassification)
+          : null;
+        if (!linkedCls || linkedCls !== filters.classification) {
+          return false;
+        }
+      }
+
       const pStatus = (prop.status || "").trim().toUpperCase();
       if (filters.proposalStatus && filters.proposalStatus !== "ALL") {
         if (filters.proposalStatus === "APPROVED") {
@@ -225,15 +268,48 @@ export function computeScopeDriftRadar(
       return true;
     });
 
+    const matchingProposalIds = new Set<string>(
+      matchingProposals.map((p: any) => p?.id).filter(Boolean)
+    );
+
+    // Deduplicate invoices by paypalInvoiceId or id to prevent double-counting
+    const rawInvoices = Array.isArray(project.invoices) ? project.invoices : [];
+    const seenInvoiceKeys = new Set<string>();
+    const allInvoices: any[] = [];
+    for (const inv of rawInvoices) {
+      if (!inv) continue;
+      const key = String(inv.paypalInvoiceId || inv.id || "");
+      if (key && seenInvoiceKeys.has(key)) continue;
+      if (key) seenInvoiceKeys.add(key);
+      allInvoices.push(inv);
+    }
+
     // Filter invoices
-    const allInvoices = Array.isArray(project.invoices) ? project.invoices : [];
     const matchingInvoices = allInvoices.filter((inv: any) => {
       if (!inv) return false;
-      if (!isWithinDateRange(inv.createdAt, filters.dateRange, referenceNow)) return false;
+      const invDate = inv.createdAt ?? inv.sentAt ?? inv.paidAt;
+      if (!isWithinDateRange(invDate, filters.dateRange, referenceNow)) return false;
+
+      if (
+        (filters.classification && filters.classification !== "ALL") ||
+        (filters.proposalStatus && filters.proposalStatus !== "ALL")
+      ) {
+        if (inv.changeOrderId && !matchingProposalIds.has(inv.changeOrderId)) {
+          return false;
+        }
+      }
+
       const iStatus = (inv.status || "").trim().toUpperCase();
       if (filters.invoiceStatus && filters.invoiceStatus !== "ALL") {
         if (filters.invoiceStatus === "UNPAID") {
-          if (iStatus !== "SENT" && iStatus !== "PARTIALLY_PAID" && iStatus !== "UNPAID" && iStatus !== "PAYMENT_PENDING") {
+          if (
+            iStatus !== "SENT" &&
+            iStatus !== "PARTIALLY_PAID" &&
+            iStatus !== "UNPAID" &&
+            iStatus !== "PAYMENT_PENDING" &&
+            iStatus !== "OVERDUE" &&
+            iStatus !== "MARKED_AS_UNPAID"
+          ) {
             return false;
           }
         } else if (iStatus !== filters.invoiceStatus) {
@@ -243,11 +319,16 @@ export function computeScopeDriftRadar(
       return true;
     });
 
-    // Build set of changeRequestIds that have at least one non-withdrawn proposal
+    // Build set of changeRequestIds that have at least one active (non-withdrawn, non-superseded, non-rejected) proposal
     const requestIdsWithActiveProposal = new Set<string>();
     for (const prop of allProposals) {
       const pStatus = (prop?.status || "").trim().toUpperCase();
-      if (pStatus !== "WITHDRAWN" && prop?.changeRequestId) {
+      if (
+        pStatus !== "WITHDRAWN" &&
+        pStatus !== "SUPERSEDED" &&
+        pStatus !== "CLIENT_REJECTED" &&
+        prop?.changeRequestId
+      ) {
         requestIdsWithActiveProposal.add(prop.changeRequestId);
       }
     }
@@ -258,7 +339,7 @@ export function computeScopeDriftRadar(
     let projUnresolvedRequests = 0;
 
     for (const req of matchingRequests) {
-      const cls = (req.classification || "").trim().toUpperCase();
+      const cls = normalizeScopeClassification(req.classification);
       globalMetrics.totalChangeRequestsCount += 1;
 
       if (cls === "IN_SCOPE") {
@@ -336,11 +417,21 @@ export function computeScopeDriftRadar(
 
     for (const prop of matchingProposals) {
       const pStatus = (prop.status || "DRAFT").trim().toUpperCase();
-      const propCurrency = (prop.currency || projectCurrency).trim().toUpperCase();
-      const amountCents = toCents(prop.amount);
+      const snapshot =
+        pStatus !== "DRAFT" && prop?.deliverables && typeof prop.deliverables === "object"
+          ? (prop.deliverables as any).approvedSnapshot
+          : undefined;
+      const propCurrency = (snapshot?.currency || prop.currency || projectCurrency)
+        .trim()
+        .toUpperCase();
+      const amountCents = toCents(snapshot?.amount ?? prop.amount);
 
-      // Strictly exclude SUPERSEDED and WITHDRAWN from active financial totals
-      if (pStatus === "SUPERSEDED" || pStatus === "WITHDRAWN") {
+      // Strictly exclude SUPERSEDED, WITHDRAWN, and CLIENT_REJECTED from active financial totals
+      if (
+        pStatus === "SUPERSEDED" ||
+        pStatus === "WITHDRAWN" ||
+        pStatus === "CLIENT_REJECTED"
+      ) {
         continue;
       }
 
@@ -389,23 +480,35 @@ export function computeScopeDriftRadar(
         globalBucket.approvedCents += amountCents;
         globalBucket.acceptedCents += amountCents;
 
-        // Check if an active (non-cancelled) invoice exists for this accepted proposal
+        // Check if an active billable (non-draft, non-cancelled, non-refunded) invoice exists for this accepted proposal
         const propInvoices = Array.isArray(prop.invoices)
           ? prop.invoices
           : allInvoices.filter((inv: any) => inv?.changeOrderId === prop.id);
-        const activeInvoice = propInvoices.find((inv: any) => {
+        const activeBillableInvoice = propInvoices.find((inv: any) => {
           const st = (inv?.status || "").trim().toUpperCase();
-          return st !== "CANCELLED" && st !== "REFUNDED";
+          return (
+            st !== "DRAFT" &&
+            st !== "CANCELLED" &&
+            st !== "REFUNDED" &&
+            st !== "UNKNOWN"
+          );
         });
+        const draftOnlyInvoice = !activeBillableInvoice
+          ? propInvoices.find((inv: any) => (inv?.status || "").trim().toUpperCase() === "DRAFT")
+          : null;
 
-        if (!activeInvoice) {
+        if (!activeBillableInvoice) {
           driftAlerts.push({
             id: `drift_acc_no_inv_${prop.id}`,
             type: "ACCEPTED_PROPOSAL_WITHOUT_INVOICE",
             severity: "HIGH",
-            title: `Accepted Proposal v${prop.version} Ready for PayPal Invoicing`,
-            description: `Client accepted proposal v${prop.version} (${formatCurrency(fromCents(amountCents), propCurrency)}) in ${projectName}, but no PayPal invoice has been issued.`,
-            rationale: "Client-accepted scope expansions should be invoiced promptly to convert agreed scope into collected cash.",
+            title: draftOnlyInvoice
+              ? `Accepted Proposal v${prop.version} Has Unsent Draft Invoice`
+              : `Accepted Proposal v${prop.version} Ready for PayPal Invoicing`,
+            description: draftOnlyInvoice
+              ? `Client accepted proposal v${prop.version} (${formatCurrency(fromCents(amountCents), propCurrency)}) in ${projectName}, but PayPal invoice ${draftOnlyInvoice.paypalInvoiceId || ""} is still in DRAFT status and has not been sent.`
+              : `Client accepted proposal v${prop.version} (${formatCurrency(fromCents(amountCents), propCurrency)}) in ${projectName}, but no PayPal invoice has been issued.`,
+            rationale: "Client-accepted scope expansions must be invoiced and sent via PayPal to convert agreed scope into collected cash.",
             projectId,
             projectName,
             resourceId: prop.id,
@@ -436,10 +539,11 @@ export function computeScopeDriftRadar(
 
       if (settlement.outstandingCents > 0) {
         const invStatus = (inv.status || "SENT").trim().toUpperCase();
+        const isOverdue = invStatus === "OVERDUE";
         driftAlerts.push({
           id: `drift_inv_unpaid_${inv.id || inv.paypalInvoiceId}`,
           type: "UNPAID_OR_OVERDUE_INVOICE",
-          severity: invStatus === "PARTIALLY_PAID" ? "MEDIUM" : "LOW",
+          severity: isOverdue ? "HIGH" : invStatus === "PARTIALLY_PAID" ? "MEDIUM" : "LOW",
           title: `PayPal Invoice ${inv.paypalInvoiceId || ""} (${invStatus})`,
           description: `Outstanding balance of ${formatCurrency(fromCents(settlement.outstandingCents), invCurrency)} on invoice in ${projectName}.`,
           rationale: "An issued invoice represents billed value, not collected cash, until settled and reconciled via PayPal.",

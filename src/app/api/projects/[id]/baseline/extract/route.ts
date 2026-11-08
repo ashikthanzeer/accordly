@@ -125,6 +125,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       status: "DRAFT_REVIEW",
       documentId,
       baseline: result.baseline,
+      extractedText: textToAnalyze,
       metadata: {
         provider: result.provider,
         model: result.model,

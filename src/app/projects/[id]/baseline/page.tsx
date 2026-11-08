@@ -21,6 +21,7 @@ export default function ProjectBaselinePage({ params }: PageProps) {
   const [projectInfo, setProjectInfo] = useState<ProjectSummaryDto | null>(null);
   const [uploadedDoc, setUploadedDoc] = useState<UploadedDocument | null>(null);
   const [draftBaseline, setDraftBaseline] = useState<StructuredScopeBaseline | null>(null);
+  const [extractedAgreementText, setExtractedAgreementText] = useState<string | null>(null);
   const [confirmedBaseline, setConfirmedBaseline] = useState<any | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -82,6 +83,7 @@ export default function ProjectBaselinePage({ params }: PageProps) {
       }
 
       setDraftBaseline(data.baseline);
+      setExtractedAgreementText(data.extractedText || null);
       setExtractionMeta(data.metadata || {});
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : String(err));
@@ -232,7 +234,10 @@ export default function ProjectBaselinePage({ params }: PageProps) {
         {/* Step 3: Review & Edit Draft Scope Baseline */}
         {draftBaseline && (
           <section className="space-y-6">
-            <AgreementHealthCheck baseline={draftBaseline} />
+            <AgreementHealthCheck
+              baseline={draftBaseline}
+              rawAgreementText={extractedAgreementText || confirmedBaseline?.document?.extractedText}
+            />
 
             <ScopeBaselineReview
               baseline={draftBaseline}
@@ -263,7 +268,10 @@ export default function ProjectBaselinePage({ params }: PageProps) {
         {/* Step 4: Confirmed Active Scope Baseline View */}
         {confirmedBaseline && !draftBaseline && (
           <section className="space-y-6">
-            <AgreementHealthCheck baseline={confirmedBaseline.structuredScope} />
+            <AgreementHealthCheck
+              baseline={confirmedBaseline.structuredScope}
+              rawAgreementText={confirmedBaseline.document?.extractedText || extractedAgreementText}
+            />
 
             <ScopeBaselineReview
               baseline={confirmedBaseline.structuredScope}

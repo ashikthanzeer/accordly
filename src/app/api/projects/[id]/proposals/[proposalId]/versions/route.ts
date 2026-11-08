@@ -63,6 +63,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       sourceProposal.deliverables && typeof sourceProposal.deliverables === "object"
         ? (sourceProposal.deliverables as Record<string, unknown>)
         : {};
+    const lockedSnapshot =
+      sourceDeliverables.approvedSnapshot &&
+      typeof sourceDeliverables.approvedSnapshot === "object"
+        ? (sourceDeliverables.approvedSnapshot as Record<string, any>)
+        : null;
 
     // 1. Determine next sequential version number across the project
     const latestOrder = await prisma.changeOrder.findFirst({
@@ -71,13 +76,15 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     });
     const newVersion = (latestOrder?.version || 0) + 1;
 
-    // 2. Clone commercial terms and strip approval/decision signatures
+    // 2. Clone commercial terms from the locked snapshot (if present) or deliverables and strip approval/decision signatures
     const pricingConfig: ProposalPricingInput =
       (sourceDeliverables.pricingConfig as ProposalPricingInput) || {
-        model: "FIXED",
+        model: (lockedSnapshot?.pricingModel as any) || "FIXED",
         currency: projectCurrency,
-        fixedAmount: Number(sourceProposal.amount),
-        lineItems: [],
+        fixedAmount: Number(lockedSnapshot?.amount ?? sourceProposal.amount),
+        lineItems: Array.isArray(lockedSnapshot?.pricing?.lineItems)
+          ? lockedSnapshot.pricing.lineItems
+          : [],
       };
 
     const calculatedPricing = calculateProposalPricing(
@@ -85,25 +92,45 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       projectCurrency
     );
 
+    const sourceDelivList = Array.isArray(lockedSnapshot?.deliverables)
+      ? lockedSnapshot.deliverables
+      : Array.isArray(sourceDeliverables.deliverables)
+      ? sourceDeliverables.deliverables
+      : [];
+
+    const sourceAssumptionsList = Array.isArray(lockedSnapshot?.assumptions)
+      ? lockedSnapshot.assumptions
+      : Array.isArray(sourceDeliverables.assumptions)
+      ? sourceDeliverables.assumptions
+      : sourceProposal.assumptions
+      ? sourceProposal.assumptions.split("\n")
+      : [];
+
     const clonedDeliverables = {
-      title: sourceDeliverables.title || "Change Proposal",
-      reasonForChange: sourceDeliverables.reasonForChange || "",
-      deliverables: Array.isArray(sourceDeliverables.deliverables)
-        ? JSON.parse(JSON.stringify(sourceDeliverables.deliverables))
-        : [],
-      assumptions: Array.isArray(sourceDeliverables.assumptions)
-        ? [...sourceDeliverables.assumptions]
-        : sourceProposal.assumptions
-          ? sourceProposal.assumptions.split("\n")
-          : [],
-      exclusions: Array.isArray(sourceDeliverables.exclusions)
+      title: lockedSnapshot?.title || sourceDeliverables.title || "Change Proposal",
+      reasonForChange:
+        lockedSnapshot?.reasonForChange || sourceDeliverables.reasonForChange || "",
+      deliverables: JSON.parse(JSON.stringify(sourceDelivList)),
+      assumptions: [...sourceAssumptionsList],
+      exclusions: Array.isArray(lockedSnapshot?.exclusions)
+        ? [...lockedSnapshot.exclusions]
+        : Array.isArray(sourceDeliverables.exclusions)
         ? [...sourceDeliverables.exclusions]
         : [],
-      dependencies: Array.isArray(sourceDeliverables.dependencies)
+      dependencies: Array.isArray(lockedSnapshot?.dependencies)
+        ? [...lockedSnapshot.dependencies]
+        : Array.isArray(sourceDeliverables.dependencies)
         ? [...sourceDeliverables.dependencies]
         : [],
-      timelineImpact: sourceProposal.timelineImpact || sourceDeliverables.timelineImpact || "",
-      commercialJustification: sourceDeliverables.commercialJustification || null,
+      timelineImpact:
+        lockedSnapshot?.timelineImpact ||
+        sourceProposal.timelineImpact ||
+        sourceDeliverables.timelineImpact ||
+        "",
+      commercialJustification:
+        lockedSnapshot?.commercialJustification ||
+        sourceDeliverables.commercialJustification ||
+        null,
       originatingClassification: sourceDeliverables.originatingClassification || null,
       disclaimer: sourceDeliverables.disclaimer || undefined,
       pricing: calculatedPricing,

@@ -155,10 +155,14 @@ export function detectActionRequiredItems(projects: any[]): ActionRequiredItem[]
 }
 
 /**
- * Retrieves the complete executive dashboard overview from persisted records.
+ * Retrieves the complete executive dashboard overview from persisted records,
+ * scoped strictly to the authenticated provider's projects when userId is provided.
  */
-export async function getDashboardOverview(): Promise<DashboardOverviewResponse> {
+export async function getDashboardOverview(
+  userId?: string
+): Promise<DashboardOverviewResponse> {
   const projects = await prisma.project.findMany({
+    where: userId ? { ownerId: userId } : undefined,
     include: {
       baselines: {
         select: { id: true, confirmedAt: true, version: true },
@@ -216,8 +220,9 @@ export async function getDashboardOverview(): Promise<DashboardOverviewResponse>
     };
   });
 
-  // Fetch recent cross-project activity from ProjectEvent
+  // Fetch recent cross-project activity from ProjectEvent scoped to provider
   const rawEvents = await prisma.projectEvent.findMany({
+    where: userId ? { project: { ownerId: userId } } : undefined,
     include: {
       project: {
         select: { id: true, name: true },

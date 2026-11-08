@@ -8,6 +8,15 @@ import {
 import { GET as handleGetProjectById } from "../../../app/api/projects/[id]/route";
 import { prisma } from "@/lib/db";
 
+vi.mock("@/lib/auth/session", () => ({
+  getAuthenticatedUser: vi.fn().mockResolvedValue({
+    id: "usr_demo_provider",
+    name: "Sarah Jenkins",
+    email: "provider@accordly.local",
+  }),
+  unauthorizedResponse: vi.fn(),
+}));
+
 vi.mock("@/lib/db", () => ({
   prisma: {
     user: {
@@ -211,7 +220,7 @@ describe("Project Creation & Retrieval API Routes", () => {
       },
     ] as any);
 
-    const res = await handleListProjects();
+    const res = await handleListProjects(new NextRequest("http://localhost:3000/api/projects"));
     const data = await res.json();
 
     expect(res.status).toBe(200);

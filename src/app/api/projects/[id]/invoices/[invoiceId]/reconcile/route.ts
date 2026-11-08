@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { reconcileInvoiceByPayPalId } from "@/lib/paypal/reconciliation";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
+import { isProjectOwnedByUser } from "@/lib/auth/ownership";
 
 interface RouteParams {
   params: Promise<{ id: string; invoiceId: string }>;
@@ -14,14 +16,25 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: projectId, invoiceId } = await params;
 
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
     const invoice = await prisma.payPalInvoice.findFirst({
       where: {
         id: invoiceId,
         projectId,
       },
+      include: {
+        project: true,
+      },
     });
 
-    if (!invoice) {
+    if (
+      !invoice ||
+      !isProjectOwnedByUser((invoice as any).project?.ownerId, user.id)
+    ) {
       return NextResponse.json(
         { error: "Invoice not found or does not belong to the specified project." },
         { status: 404 }
@@ -59,4 +72,3 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     );
   }
 }
-

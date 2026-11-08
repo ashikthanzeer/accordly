@@ -6,11 +6,20 @@ import { usePathname } from "next/navigation";
 import { AnimatedAccordlyLogo } from "@/components/brand/AnimatedAccordlyLogo";
 import { CreateProjectModal } from "@/components/projects/CreateProjectModal";
 
+interface SidebarUser {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+}
+
 interface SidebarProps {
   projectId?: string;
   projectName?: string;
   isMobileOpen?: boolean;
   onMobileClose?: () => void;
+  user?: SidebarUser | null;
+  onSignOut?: () => void;
 }
 
 export function Sidebar({
@@ -18,6 +27,8 @@ export function Sidebar({
   projectName,
   isMobileOpen = false,
   onMobileClose,
+  user,
+  onSignOut,
 }: SidebarProps) {
   const pathname = usePathname();
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
@@ -195,18 +206,42 @@ export function Sidebar({
 
         {/* User Profile Footer */}
         <div className="p-4 border-t border-white/[0.08] bg-[#090A0C]/60 backdrop-blur-md">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#171A20] border border-[#D4AF65]/40 flex items-center justify-center text-xs font-bold text-[#D4AF65] shadow-sm">
-              SJ
+          <div className="flex items-center justify-between gap-2.5">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              {user?.image ? (
+                <img
+                  src={user.image}
+                  alt={user.name || "User avatar"}
+                  referrerPolicy="no-referrer"
+                  className="w-8 h-8 rounded-full object-cover border border-[#D4AF65]/40 shrink-0 shadow-sm"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-[#171A20] border border-[#D4AF65]/40 flex items-center justify-center text-xs font-bold text-[#D4AF65] shrink-0 shadow-sm">
+                  {(user?.name || user?.email || "PR")
+                    .slice(0, 2)
+                    .toUpperCase()}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-[#F5F3ED] truncate">
+                  {user?.name || "Authenticated Provider"}
+                </p>
+                <p className="text-[10px] text-[#9298A3] truncate">
+                  {user?.email || "Provider Workspace"}
+                </p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-[#F5F3ED] truncate">
-                Sarah Jenkins
-              </p>
-              <p className="text-[10px] text-[#9298A3] truncate">
-                DigitalCraft Agency
-              </p>
-            </div>
+
+            {onSignOut && (
+              <button
+                type="button"
+                onClick={onSignOut}
+                title="Sign out"
+                className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-[#9298A3] hover:text-[#F5F3ED] hover:bg-white/[0.06] border border-transparent hover:border-white/[0.08] transition-all shrink-0"
+              >
+                Sign out
+              </button>
+            )}
           </div>
         </div>
       </aside>

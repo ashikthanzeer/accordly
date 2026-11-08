@@ -5,6 +5,8 @@ import {
   PricingCalculationError,
 } from "@/lib/pricing/calculator";
 import type { ProposalPricingInput } from "@/lib/pricing/schema";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
+import { isProjectOwnedByUser } from "@/lib/auth/ownership";
 
 interface RouteParams {
   params: Promise<{ id: string; proposalId: string }>;
@@ -19,12 +21,20 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: projectId, proposalId } = await params;
 
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
     const sourceProposal = await prisma.changeOrder.findFirst({
       where: { id: proposalId, projectId },
       include: { project: true },
     });
 
-    if (!sourceProposal) {
+    if (
+      !sourceProposal ||
+      !isProjectOwnedByUser(sourceProposal.project?.ownerId, user.id)
+    ) {
       return NextResponse.json(
         { error: "Source proposal not found." },
         { status: 404 }

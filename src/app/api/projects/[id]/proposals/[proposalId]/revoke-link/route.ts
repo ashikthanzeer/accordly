@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
+import { isProjectOwnedByUser } from "@/lib/auth/ownership";
 
 interface RouteParams {
   params: Promise<{ id: string; proposalId: string }>;
@@ -14,11 +16,20 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: projectId, proposalId } = await params;
 
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
     const proposal = await prisma.changeOrder.findFirst({
       where: { id: proposalId, projectId },
+      include: { project: true },
     });
 
-    if (!proposal) {
+    if (
+      !proposal ||
+      !isProjectOwnedByUser((proposal as any).project?.ownerId, user.id)
+    ) {
       return NextResponse.json(
         { error: "Proposal not found." },
         { status: 404 }

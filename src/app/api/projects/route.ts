@@ -6,6 +6,7 @@ import {
   extractPrismaCode,
   logDiagnostic,
 } from "@/lib/logger";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
 
 function serializeProject(project: {
   id: string;
@@ -40,13 +41,19 @@ function serializeProject(project: {
 
 /**
  * GET /api/projects
- * Lists all projects ordered by most recent update.
+ * Lists all projects belonging to the authenticated provider ordered by most recent update.
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   const correlationId = createCorrelationId();
+
+  const user = await getAuthenticatedUser(req);
+  if (!user) {
+    return unauthorizedResponse(correlationId);
+  }
 
   try {
     const projects = await prisma.project.findMany({
+      where: { ownerId: user.id },
       orderBy: { updatedAt: "desc" },
     });
 
@@ -81,10 +88,15 @@ export async function GET() {
 
 /**
  * POST /api/projects
- * Validates input and creates a new Project and PROJECT_CREATED timeline event in NeonDB.
+ * Validates input and creates a new Project owned by the authenticated provider.
  */
 export async function POST(req: NextRequest) {
   const correlationId = createCorrelationId();
+
+  const user = await getAuthenticatedUser(req);
+  if (!user) {
+    return unauthorizedResponse(correlationId);
+  }
 
   let rawBody: unknown;
   try {
@@ -141,20 +153,9 @@ export async function POST(req: NextRequest) {
   const data = parsed.data;
 
   try {
-    // Ensure default provider owner exists
-    const owner = await prisma.user.upsert({
-      where: { email: "provider@accordly.local" },
-      update: {},
-      create: {
-        id: "usr_demo_provider",
-        name: "Sarah Jenkins",
-        email: "provider@accordly.local",
-      },
-    });
-
     const project = await prisma.project.create({
       data: {
-        ownerId: owner.id,
+        ownerId: user.id,
         name: data.name,
         clientName: data.clientName,
         clientEmail: data.clientEmail || "",
@@ -169,10 +170,12 @@ export async function POST(req: NextRequest) {
       data: {
         projectId: project.id,
         actorType: "PROVIDER",
+        actorId: user.id,
         eventType: "PROJECT_CREATED",
         description: `Created project "${project.name}" for client "${project.clientName}" (${project.currency}, ${project.pricingModel}).`,
         metadata: {
           projectId: project.id,
+          ownerId: user.id,
           clientName: project.clientName,
           currency: project.currency,
           pricingModel: project.pricingModel,
@@ -225,4 +228,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { ScopeBaselineSchema } from "@/lib/ai/schema";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
+import { resolveOwnedProject, projectNotFoundResponse } from "@/lib/auth/ownership";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -8,12 +10,22 @@ interface RouteParams {
 
 /**
  * POST /api/projects/[id]/baseline/confirm
- * Confirms a reviewed and provider-edited scope baseline.
- * Enforces versioning, records confirmation timestamp, and logs timeline event.
+ * Confirms a reviewed and provider-edited scope baseline for an owned project.
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: projectId } = await params;
+
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
+    const project = await resolveOwnedProject(projectId, user.id);
+    if (!project) {
+      return projectNotFoundResponse(projectId);
+    }
+
     const body = await req.json();
 
     if (!body || !body.structuredScope) {
@@ -36,7 +48,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     }
 
     const validatedScope = parseResult.data;
-    const confirmedBy = body.confirmedBy?.trim() || "Demo Provider";
+    const confirmedBy = body.confirmedBy?.trim() || user.name || "Provider";
     const documentId = body.documentId?.trim() || null;
 
     // Determine next version (never overwrite historical baselines)
@@ -64,6 +76,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       data: {
         projectId,
         actorType: "PROVIDER",
+        actorId: user.id,
         eventType: "BASELINE_CONFIRMED",
         description: `Provider confirmed Scope Baseline v${nextVersion} (${validatedScope.deliverables.length} deliverables, ${validatedScope.exclusions.length} exclusions).`,
         metadata: {
@@ -99,4 +112,3 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     );
   }
 }
-

@@ -6,6 +6,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { isProjectOwnedByUser } from "@/lib/auth/ownership";
 
 export type EventCategory = "SCOPE" | "REQUEST" | "PROPOSAL" | "INVOICE" | "PAYMENT" | "GENERAL";
 
@@ -81,12 +82,14 @@ function formatRelativeTime(date: Date): string {
  * Retrieves the full chronological activity timeline for a project.
  */
 export async function getProjectTimeline(
-  projectId: string
+  projectId: string,
+  userId?: string
 ): Promise<ProjectTimelineResponse | null> {
   const project = await prisma.project.findUnique({
     where: { id: projectId },
     select: {
       id: true,
+      ownerId: true,
       name: true,
       clientName: true,
       status: true,
@@ -94,6 +97,9 @@ export async function getProjectTimeline(
   });
 
   if (!project) return null;
+  if (userId && !isProjectOwnedByUser((project as any).ownerId, userId)) {
+    return null;
+  }
 
   const rawEvents = await prisma.projectEvent.findMany({
     where: { projectId },

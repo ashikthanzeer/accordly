@@ -18,49 +18,25 @@ import {
   extractPrismaCode,
   logDiagnostic,
 } from "@/lib/logger";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
+import { isProjectOwnedByUser, projectNotFoundResponse } from "@/lib/auth/ownership";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 /**
- * Resolves an existing project by ID. Auto-scaffolds "demo-project-01" on first run,
- * and returns null for unknown project IDs so the route can respond with HTTP 404.
+ * Resolves an existing project by ID and verifies ownership for the authenticated user.
  */
-async function resolveProjectForUpload(projectId: string) {
+async function resolveProjectForUpload(projectId: string, userId: string) {
   const existing = await prisma.project.findUnique({
     where: { id: projectId },
   });
 
-  if (existing) return existing;
+  if (!existing) return null;
+  if (!isProjectOwnedByUser(existing.ownerId, userId)) return null;
 
-  if (projectId !== "demo-project-01") {
-    return null;
-  }
-
-  const user = await prisma.user.upsert({
-    where: { email: "provider@accordly.local" },
-    update: {},
-    create: {
-      id: "usr_demo_provider",
-      name: "Demo Provider",
-      email: "provider@accordly.local",
-    },
-  });
-
-  return prisma.project.create({
-    data: {
-      id: projectId,
-      ownerId: user.id,
-      name: "Client Redesign & Commercial Scope",
-      clientName: "Acme Digital Corp",
-      clientEmail: "client@example.com",
-      currency: "USD",
-      pricingModel: "HOURLY",
-      hourlyRate: 150.0,
-      status: "ACTIVE",
-    },
-  });
+  return existing;
 }
 
 /**
@@ -72,9 +48,14 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const { id: projectId } = await params;
   let stored: StoredDocumentResult | null = null;
 
+  const user = await getAuthenticatedUser(req);
+  if (!user) {
+    return unauthorizedResponse(correlationId);
+  }
+
   try {
-    // 1. Verify project exists
-    const project = await resolveProjectForUpload(projectId);
+    // 1. Verify project exists and belongs to authenticated provider
+    const project = await resolveProjectForUpload(projectId, user.id);
     if (!project) {
       logDiagnostic({
         level: "warn",
@@ -414,13 +395,23 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
 /**
  * GET /api/projects/[id]/documents
- * Returns list of uploaded documents for the project.
+ * Returns list of uploaded documents for the project owned by the authenticated provider.
  */
-export async function GET(_req: NextRequest, { params }: RouteParams) {
+export async function GET(req: NextRequest, { params }: RouteParams) {
   const correlationId = createCorrelationId();
   const { id: projectId } = await params;
 
+  const user = await getAuthenticatedUser(req);
+  if (!user) {
+    return unauthorizedResponse(correlationId);
+  }
+
   try {
+    const project = await resolveProjectForUpload(projectId, user.id);
+    if (!project) {
+      return projectNotFoundResponse(projectId, correlationId);
+    }
+
     const documents = await prisma.document.findMany({
       where: { projectId },
       orderBy: { createdAt: "desc" },

@@ -8,6 +8,8 @@ import {
 } from "@/lib/pricing/calculator";
 import type { ProposalPricingInput } from "@/lib/pricing/schema";
 import type { ChangeRequestAnalysisResult } from "@/lib/ai/classifier-schema";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
+import { resolveOwnedProject, projectNotFoundResponse } from "@/lib/auth/ownership";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -15,11 +17,21 @@ interface RouteParams {
 
 /**
  * GET /api/projects/[id]/proposals
- * Returns all change proposals / orders for the project.
+ * Returns all change proposals / orders for an owned project.
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: projectId } = await params;
+
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
+    const project = await resolveOwnedProject(projectId, user.id);
+    if (!project) {
+      return projectNotFoundResponse(projectId);
+    }
 
     const proposals = await prisma.changeOrder.findMany({
       where: { projectId },
@@ -51,6 +63,12 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: projectId } = await params;
+
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
     const body = await req.json();
 
     const changeRequestId = body?.changeRequestId?.trim();
@@ -61,10 +79,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // 1. Verify project
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
-    });
+    // 1. Verify project and ownership
+    const project = await resolveOwnedProject(projectId, user.id);
     if (!project) {
       return NextResponse.json({ error: "Project not found." }, { status: 404 });
     }

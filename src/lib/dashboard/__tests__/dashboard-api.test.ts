@@ -4,6 +4,15 @@ import { GET as handleTimelineGet } from "../../../app/api/projects/[id]/timelin
 import { prisma } from "@/lib/db";
 import { NextRequest } from "next/server";
 
+vi.mock("@/lib/auth/session", () => ({
+  getAuthenticatedUser: vi.fn().mockResolvedValue({
+    id: "usr_demo_provider",
+    name: "Sarah Jenkins",
+    email: "provider@accordly.local",
+  }),
+  unauthorizedResponse: vi.fn(),
+}));
+
 vi.mock("@/lib/db", () => {
   return {
     prisma: {

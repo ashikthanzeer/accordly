@@ -10,6 +10,8 @@ import {
   extractPrismaCode,
   logDiagnostic,
 } from "@/lib/logger";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
+import { resolveOwnedProject, projectNotFoundResponse } from "@/lib/auth/ownership";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -23,7 +25,17 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const correlationId = createCorrelationId();
   const { id: projectId } = await params;
 
+  const user = await getAuthenticatedUser(req);
+  if (!user) {
+    return unauthorizedResponse(correlationId);
+  }
+
   try {
+    const project = await resolveOwnedProject(projectId, user.id);
+    if (!project) {
+      return projectNotFoundResponse(projectId, correlationId);
+    }
+
     let body: { documentId?: string; directText?: string } = {};
     try {
       body = await req.json();
@@ -35,10 +47,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     let documentId = body.documentId?.trim();
 
     if (!textToAnalyze) {
-      // Look up document in database
+      // Look up document in database scoped strictly to projectId
       const document = documentId
-        ? await prisma.document.findUnique({
-            where: { id: documentId },
+        ? await prisma.document.findFirst({
+            where: { id: documentId, projectId },
           })
         : await prisma.document.findFirst({
             where: { projectId, extractionStatus: "READY" },

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { syncProposalInvoiceStatus } from "@/lib/paypal";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
+import { resolveOwnedProject, projectNotFoundResponse } from "@/lib/auth/ownership";
 
 interface RouteParams {
   params: Promise<{ id: string; proposalId: string }>;
@@ -7,11 +9,22 @@ interface RouteParams {
 
 /**
  * POST /api/projects/[id]/proposals/[proposalId]/invoice/sync
- * Manually synchronizes the invoice status directly from PayPal Invoicing API v2.
+ * Manually synchronizes the invoice status directly from PayPal Invoicing API v2 for an owned project.
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: projectId, proposalId } = await params;
+
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
+    const project = await resolveOwnedProject(projectId, user.id);
+    if (!project) {
+      return projectNotFoundResponse(projectId);
+    }
+
     const result = await syncProposalInvoiceStatus(projectId, proposalId);
 
     if (!result.success) {
@@ -34,4 +47,3 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     );
   }
 }
-

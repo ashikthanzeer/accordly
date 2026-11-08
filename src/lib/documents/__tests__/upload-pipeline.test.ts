@@ -18,6 +18,15 @@ import { POST as handleUploadDocument } from "../../../app/api/projects/[id]/doc
 import { redactSecrets, extractPrismaCode } from "@/lib/logger";
 import { prisma } from "@/lib/db";
 
+vi.mock("@/lib/auth/session", () => ({
+  getAuthenticatedUser: vi.fn().mockResolvedValue({
+    id: "usr_demo_provider",
+    name: "Sarah Jenkins",
+    email: "provider@accordly.local",
+  }),
+  unauthorizedResponse: vi.fn(),
+}));
+
 vi.mock("@/lib/db", () => ({
   prisma: {
     user: {

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
+import { resolveOwnedProject, projectNotFoundResponse } from "@/lib/auth/ownership";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -7,11 +9,21 @@ interface RouteParams {
 
 /**
  * GET /api/projects/[id]/baseline
- * Returns the latest confirmed scope baseline and project status.
+ * Returns the latest confirmed scope baseline and project status for an owned project.
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: projectId } = await params;
+
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
+    const project = await resolveOwnedProject(projectId, user.id);
+    if (!project) {
+      return projectNotFoundResponse(projectId);
+    }
 
     const latestBaseline = await prisma.scopeBaseline.findFirst({
       where: { projectId },
@@ -45,4 +57,3 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     );
   }
 }
-

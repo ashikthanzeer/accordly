@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProposalInvoice, createAndSendProposalInvoice } from "@/lib/paypal";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
+import { resolveOwnedProject, projectNotFoundResponse } from "@/lib/auth/ownership";
 
 interface RouteParams {
   params: Promise<{ id: string; proposalId: string }>;
@@ -7,11 +9,22 @@ interface RouteParams {
 
 /**
  * GET /api/projects/[id]/proposals/[proposalId]/invoice
- * Retrieves the stored invoice for the proposal if one exists.
+ * Retrieves the stored invoice for the proposal if one exists in an owned project.
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: projectId, proposalId } = await params;
+
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
+    const project = await resolveOwnedProject(projectId, user.id);
+    if (!project) {
+      return projectNotFoundResponse(projectId);
+    }
+
     const invoice = await getProposalInvoice(projectId, proposalId);
 
     if (!invoice) {
@@ -33,11 +46,22 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
 /**
  * POST /api/projects/[id]/proposals/[proposalId]/invoice
- * Endpoint alias for creating and sending an invoice.
+ * Endpoint alias for creating and sending an invoice for an owned project.
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: projectId, proposalId } = await params;
+
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
+    const project = await resolveOwnedProject(projectId, user.id);
+    if (!project) {
+      return projectNotFoundResponse(projectId);
+    }
+
     const body = await req.json().catch(() => ({}));
 
     const result = await createAndSendProposalInvoice(projectId, proposalId, {
@@ -67,4 +91,3 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     );
   }
 }
-

@@ -5,6 +5,8 @@ import {
   extractPrismaCode,
   logDiagnostic,
 } from "@/lib/logger";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
+import { isProjectOwnedByUser } from "@/lib/auth/ownership";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -12,18 +14,23 @@ interface RouteParams {
 
 /**
  * GET /api/projects/[id]
- * Retrieves metadata for a single project to display in workspace headers and forms.
+ * Retrieves metadata for a single project owned by the authenticated provider.
  */
-export async function GET(_req: NextRequest, { params }: RouteParams) {
+export async function GET(req: NextRequest, { params }: RouteParams) {
   const correlationId = createCorrelationId();
   const { id: projectId } = await params;
+
+  const user = await getAuthenticatedUser(req);
+  if (!user) {
+    return unauthorizedResponse(correlationId);
+  }
 
   try {
     const project = await prisma.project.findUnique({
       where: { id: projectId },
     });
 
-    if (!project) {
+    if (!project || !isProjectOwnedByUser(project.ownerId, user.id)) {
       logDiagnostic({
         level: "warn",
         operation: "project.get",
@@ -88,4 +95,3 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
     );
   }
 }
-

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProposalInvoicePreview } from "@/lib/paypal";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
+import { resolveOwnedProject, projectNotFoundResponse } from "@/lib/auth/ownership";
 
 interface RouteParams {
   params: Promise<{ id: string; proposalId: string }>;
@@ -12,6 +14,17 @@ interface RouteParams {
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: projectId, proposalId } = await params;
+
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
+    const project = await resolveOwnedProject(projectId, user.id);
+    if (!project) {
+      return projectNotFoundResponse(projectId);
+    }
+
     const result = await getProposalInvoicePreview(projectId, proposalId);
 
     if (!result.eligible && !result.isAlreadyInvoiced) {
@@ -41,4 +54,3 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     );
   }
 }
-

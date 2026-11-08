@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { classifyChangeRequest, ClassificationError } from "@/lib/ai/classifier";
 import type { StructuredScopeBaseline } from "@/lib/ai/schema";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
+import { resolveOwnedProject, projectNotFoundResponse } from "@/lib/auth/ownership";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -10,11 +12,21 @@ interface RouteParams {
 /**
  * POST /api/projects/[id]/change-requests
  * Analyzes a new client request against the project's confirmed scope baseline.
- * Enforces baseline eligibility, executes classification, and persists results.
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: projectId } = await params;
+
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
+    const project = await resolveOwnedProject(projectId, user.id);
+    if (!project) {
+      return projectNotFoundResponse(projectId);
+    }
+
     const body = await req.json();
 
     const requestText = body?.requestText?.trim();
@@ -135,6 +147,16 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: projectId } = await params;
+
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
+    const project = await resolveOwnedProject(projectId, user.id);
+    if (!project) {
+      return projectNotFoundResponse(projectId);
+    }
 
     const changeRequests = await prisma.changeRequest.findMany({
       where: { projectId },

@@ -10,6 +10,15 @@ import { NextRequest } from "next/server";
 import { buildApprovedSnapshot, computeSnapshotHash } from "../snapshot";
 import { hashReviewToken } from "../tokens";
 
+vi.mock("@/lib/auth/session", () => ({
+  getAuthenticatedUser: vi.fn().mockResolvedValue({
+    id: "usr_demo_provider",
+    name: "Sarah Jenkins",
+    email: "provider@accordly.local",
+  }),
+  unauthorizedResponse: vi.fn(),
+}));
+
 vi.mock("@/lib/db", () => {
   const mockPrisma = {
     changeOrder: {

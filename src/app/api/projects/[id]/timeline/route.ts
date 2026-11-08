@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProjectTimeline } from "@/lib/timeline/service";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -7,12 +8,18 @@ interface RouteParams {
 
 /**
  * GET /api/projects/[id]/timeline
- * Returns chronological commercial lifecycle events for a specific project.
+ * Returns chronological commercial lifecycle events for an owned project.
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: projectId } = await params;
-    const timeline = await getProjectTimeline(projectId);
+
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
+    const timeline = await getProjectTimeline(projectId, user.id);
 
     if (!timeline) {
       return NextResponse.json(
@@ -30,4 +37,3 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     );
   }
 }
-

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth/session";
+import { resolveOwnedProject, projectNotFoundResponse } from "@/lib/auth/ownership";
 
 interface RouteParams {
   params: Promise<{ id: string; requestId: string }>;
@@ -7,11 +9,21 @@ interface RouteParams {
 
 /**
  * GET /api/projects/[id]/change-requests/[requestId]
- * Retrieves a single change request with its full analysis details.
+ * Retrieves a single change request with its full analysis details for an owned project.
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: projectId, requestId } = await params;
+
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
+    const project = await resolveOwnedProject(projectId, user.id);
+    if (!project) {
+      return projectNotFoundResponse(projectId);
+    }
 
     const changeRequest = await prisma.changeRequest.findFirst({
       where: {
@@ -38,11 +50,22 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
 /**
  * PATCH /api/projects/[id]/change-requests/[requestId]
- * Updates review sign-off and optional provider notes for a change request.
+ * Updates review sign-off and optional provider notes for a change request in an owned project.
  */
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
     const { id: projectId, requestId } = await params;
+
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
+    const project = await resolveOwnedProject(projectId, user.id);
+    if (!project) {
+      return projectNotFoundResponse(projectId);
+    }
+
     const body = await req.json();
 
     const changeRequest = await prisma.changeRequest.findFirst({
@@ -90,6 +113,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       data: {
         projectId,
         actorType: "PROVIDER",
+        actorId: user.id,
         eventType: "CHANGE_REQUEST_REVIEWED",
         description: `Provider signed off on change request analysis (${changeRequest.classification}).`,
         metadata: {
@@ -112,4 +136,3 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     );
   }
 }
-

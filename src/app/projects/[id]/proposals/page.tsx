@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { ProposalVersionComparison } from "@/components/proposals/ProposalVersionComparison";
+import { DeleteProposalModal } from "@/components/proposals/DeleteProposalModal";
 import { formatCurrency } from "@/lib/pricing/calculator";
 
 interface PageProps {
@@ -16,26 +17,27 @@ export default function ProposalsListPage({ params }: PageProps) {
   const projectId = resolvedParams.id;
 
   const [proposals, setProposals] = useState<any[]>([]);
+  const [deletingProposal, setDeletingProposal] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadProposals() {
-      setIsLoading(true);
-      try {
-        const res = await fetch(`/api/projects/${projectId}/proposals`);
-        const data = await res.json();
-        if (res.ok && Array.isArray(data.proposals)) {
-          setProposals(data.proposals);
-        }
-      } catch (err) {
-        console.error("Error loading proposals:", err);
-      } finally {
-        setIsLoading(false);
+  const loadProposals = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/proposals`);
+      const data = await res.json();
+      if (res.ok && Array.isArray(data.proposals)) {
+        setProposals(data.proposals);
       }
+    } catch (err) {
+      console.error("Error loading proposals:", err);
+    } finally {
+      setIsLoading(false);
     }
-
-    loadProposals();
   }, [projectId]);
+
+  useEffect(() => {
+    loadProposals();
+  }, [loadProposals]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -207,6 +209,28 @@ export default function ProposalsListPage({ params }: PageProps) {
                         </p>
                       </div>
 
+                      {prop.status === "DRAFT" ? (
+                        <button
+                          type="button"
+                          onClick={() => setDeletingProposal(prop)}
+                          title="Delete this uncommitted draft proposal"
+                          className="inline-flex items-center justify-center p-2 rounded-lg text-neutral-400 hover:text-red-400 hover:bg-red-500/10 border border-neutral-800 hover:border-red-500/20 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      ) : (
+                        <span
+                          title="This proposal is protected because it has been approved or shared."
+                          className="inline-flex items-center justify-center p-2 rounded-lg text-neutral-600 bg-neutral-900/50 border border-neutral-800 cursor-not-allowed"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                        </span>
+                      )}
+
                       <Link
                         href={`/projects/${projectId}/proposals/${prop.id}`}
                         className="inline-flex items-center px-3.5 py-2 rounded-lg text-xs font-semibold text-[#F5F3ED] bg-[#111318]/90 hover:text-[#D4AF65] hover:border-[#D4AF65]/50 transition-all border border-[#292D35] active:scale-[0.98]"
@@ -227,6 +251,17 @@ export default function ProposalsListPage({ params }: PageProps) {
             proposals={proposals}
           />
         )}
+
+        {/* Delete Proposal Modal */}
+        <DeleteProposalModal
+          isOpen={deletingProposal !== null}
+          onClose={() => setDeletingProposal(null)}
+          onDeleted={() => {
+            loadProposals();
+          }}
+          projectId={projectId}
+          proposal={deletingProposal}
+        />
       </div>
     </AppShell>
   );

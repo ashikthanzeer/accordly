@@ -130,7 +130,7 @@ export function calculateDashboardKpis(
   projects: Array<{
     id: string;
     status: string;
-    changeOrders?: Array<{ status: string }>;
+    changeOrders?: Array<{ status: string; deletedAt?: any }>;
     invoices?: Array<{ status: string }>;
   }>
 ): DashboardKpis {
@@ -155,6 +155,9 @@ export function calculateDashboardKpis(
 
     if (isProjActive && Array.isArray(project.changeOrders)) {
       for (const proposal of project.changeOrders) {
+        if (proposal.deletedAt !== null && proposal.deletedAt !== undefined) {
+          continue;
+        }
         const pStatus = (proposal.status || "").toUpperCase();
         if (pStatus === "SENT_TO_CLIENT" || pStatus === "APPROVED") {
           pendingApprovalsCount += 1;

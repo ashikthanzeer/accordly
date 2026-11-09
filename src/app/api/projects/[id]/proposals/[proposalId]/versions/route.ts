@@ -28,7 +28,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     }
 
     const sourceProposal = await prisma.changeOrder.findFirst({
-      where: { id: proposalId, projectId },
+      where: { id: proposalId, projectId, deletedAt: null },
       include: { project: true },
     });
 

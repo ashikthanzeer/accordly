@@ -35,7 +35,7 @@ export async function getProposalInvoicePreview(
   proposalId: string
 ): Promise<ProposalInvoicePreviewResult> {
   const proposal = await prisma.changeOrder.findFirst({
-    where: { id: proposalId, projectId },
+    where: { id: proposalId, projectId, deletedAt: null },
     include: {
       invoices: true,
       project: {
@@ -85,7 +85,7 @@ export async function createAndSendProposalInvoice(
   options?: { note?: string; customConfig?: PayPalConfig }
 ): Promise<ProposalInvoiceOperationResult> {
   const proposal = await prisma.changeOrder.findFirst({
-    where: { id: proposalId, projectId },
+    where: { id: proposalId, projectId, deletedAt: null },
     include: {
       invoices: true,
       project: {

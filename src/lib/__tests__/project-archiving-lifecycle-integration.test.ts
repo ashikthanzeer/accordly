@@ -6,6 +6,7 @@ import { DELETE as handleDeleteProject } from "@/app/api/projects/[id]/route";
 import { POST as handleDocumentUpload } from "@/app/api/projects/[id]/documents/route";
 import { POST as handleChangeRequest } from "@/app/api/projects/[id]/change-requests/route";
 import { POST as handleProposalCreate } from "@/app/api/projects/[id]/proposals/route";
+import { POST as handleProposalDelete } from "@/app/api/projects/[id]/proposals/[proposalId]/delete/route";
 import { POST as handleInvoiceCreate } from "@/app/api/projects/[id]/proposals/[proposalId]/invoice/create-and-send/route";
 import { prisma } from "@/lib/db";
 import * as sessionModule from "@/lib/auth/session";
@@ -42,6 +43,12 @@ vi.mock("@/lib/db", () => ({
     scopeBaseline: {
       findFirst: vi.fn(),
     },
+    changeOrder: {
+      findFirst: vi.fn(),
+      count: vi.fn(),
+      update: vi.fn(),
+    },
+    $transaction: vi.fn(async (cb: any) => cb(prisma)),
   },
 }));
 
@@ -347,6 +354,25 @@ describe("Project Archiving & Lifecycle Management Integration Suite", () => {
     expect(invRes.status).toBe(409);
     const invData = await invRes.json();
     expect(invData.code).toBe("PROJECT_ARCHIVED");
+
+    // 5. Proposal deletion rejected on archived project
+    vi.mocked(prisma.changeOrder.findFirst).mockResolvedValueOnce({
+      id: "prop_1",
+      projectId: "proj_archived_1",
+      project: archivedProject,
+    } as any);
+    const delReq = new NextRequest(
+      "http://localhost:3000/api/projects/proj_archived_1/proposals/prop_1/delete",
+      {
+        method: "POST",
+      }
+    );
+    const delRes = await handleProposalDelete(delReq, {
+      params: Promise.resolve({ id: "proj_archived_1", proposalId: "prop_1" }),
+    });
+    expect(delRes.status).toBe(409);
+    const delData = await delRes.json();
+    expect(delData.code).toBe("PROJECT_ARCHIVED");
   });
 });
 

@@ -89,6 +89,8 @@ model Project {
   updatedAt    DateTime       @updatedAt
 
   @@index([ownerId])
+  @@index([status])
+  @@index([archivedAt])
 }
 
 model Document {
@@ -156,6 +158,8 @@ model ChangeOrder {
   clientRejectedAt     DateTime?
   reviewTokenHash      String?
   reviewTokenExpiresAt DateTime?
+  deletedAt            DateTime?
+  deletedBy            String?
   invoices             PayPalInvoice[]
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @updatedAt
@@ -163,6 +167,7 @@ model ChangeOrder {
   @@unique([projectId, version])
   @@index([projectId])
   @@index([reviewTokenHash])
+  @@index([deletedAt])
 }
 
 model PayPalInvoice {

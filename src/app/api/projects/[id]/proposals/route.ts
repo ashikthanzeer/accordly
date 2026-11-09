@@ -35,7 +35,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     }
 
     const proposals = await prisma.changeOrder.findMany({
-      where: { projectId },
+      where: { projectId, deletedAt: null },
       orderBy: { version: "desc" },
       include: {
         changeRequest: {

@@ -245,6 +245,7 @@ export function computeScopeDriftRadar(
     const allProposals = Array.isArray(project.changeOrders) ? project.changeOrders : [];
     const matchingProposals = allProposals.filter((prop: any) => {
       if (!prop) return false;
+      if (prop.deletedAt !== null && prop.deletedAt !== undefined) return false;
       if (!isWithinDateRange(prop.createdAt, filters.dateRange, referenceNow)) return false;
 
       if (filters.classification && filters.classification !== "ALL") {

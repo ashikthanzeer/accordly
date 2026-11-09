@@ -82,6 +82,9 @@ export function detectActionRequiredItems(projects: any[]): ActionRequiredItem[]
     // 3. Proposals lifecycle actions
     if (Array.isArray(project.changeOrders)) {
       for (const prop of project.changeOrders) {
+        if (prop.deletedAt !== null && prop.deletedAt !== undefined) {
+          continue;
+        }
         const status = (prop.status || "").toUpperCase();
 
         if (status === "APPROVED" || status === "PROVIDER_APPROVED") {
@@ -185,6 +188,7 @@ export async function getDashboardOverview(
         select: { id: true, sourceText: true, classification: true, analysis: true, createdAt: true },
       },
       changeOrders: {
+        where: { deletedAt: null },
         include: {
           invoices: true,
         },
@@ -226,7 +230,7 @@ export async function getDashboardOverview(
       status: p.status,
       hasConfirmedBaseline,
       requestsCount: p.requests?.length || 0,
-      proposalsCount: p.changeOrders?.length || 0,
+      proposalsCount: (p.changeOrders || []).filter((co: any) => !co.deletedAt).length,
       activeInvoice: latestInvoice
         ? {
             paypalInvoiceId: latestInvoice.paypalInvoiceId,

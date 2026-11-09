@@ -27,7 +27,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     }
 
     const proposal = await prisma.changeOrder.findFirst({
-      where: { id: proposalId, projectId },
+      where: { id: proposalId, projectId, deletedAt: null },
       include: {
         changeRequest: true,
         project: {
@@ -81,7 +81,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const body = await req.json();
 
     const existingProposal = await prisma.changeOrder.findFirst({
-      where: { id: proposalId, projectId },
+      where: { id: proposalId, projectId, deletedAt: null },
       include: { project: true },
     });
 
@@ -186,5 +186,21 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * DELETE /api/projects/[id]/proposals/[proposalId]
+ * Rejects permanent deletion.
+ */
+export async function DELETE() {
+  return NextResponse.json(
+    {
+      error:
+        "Permanent proposal deletion is prohibited. To safely soft-delete an eligible draft proposal, use POST /api/projects/:id/proposals/:proposalId/delete.",
+      code: "PERMANENT_DELETION_PROHIBITED",
+      allowedMethods: ["POST /api/projects/:id/proposals/:proposalId/delete"],
+    },
+    { status: 405 }
+  );
 }
 

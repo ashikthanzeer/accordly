@@ -103,10 +103,10 @@ export default function ProjectTimelinePage({ params }: TimelinePageProps) {
 
   return (
     <AppShell
+      projectId={projectId}
       breadcrumbs={[
-        { label: "Dashboard", href: "/" },
         { label: `Project (${projectId.slice(0, 8)}...)`, href: `/projects/${projectId}/baseline` },
-        { label: "Activity Timeline" },
+        { label: "Activity Timeline", active: true },
       ]}
     >
       <div className="space-y-6">

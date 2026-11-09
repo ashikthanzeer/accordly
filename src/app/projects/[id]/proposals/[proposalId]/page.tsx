@@ -382,11 +382,11 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
   if (isLoading) {
     return (
       <AppShell
+        projectId={projectId}
         breadcrumbs={[
-          { label: "Dashboard", href: "/" },
           { label: `Project (${projectId.slice(0, 8)}...)`, href: `/projects/${projectId}/baseline` },
           { label: "Proposals", href: `/projects/${projectId}/proposals` },
-          { label: "Loading..." },
+          { label: "Loading...", active: true },
         ]}
       >
         <div className="bg-[#171A20] border border-[#292D35] rounded-xl p-12 text-center text-[#9298A3] text-sm font-mono">
@@ -399,11 +399,11 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
   if (!proposal) {
     return (
       <AppShell
+        projectId={projectId}
         breadcrumbs={[
-          { label: "Dashboard", href: "/" },
           { label: `Project (${projectId.slice(0, 8)}...)`, href: `/projects/${projectId}/baseline` },
           { label: "Proposals", href: `/projects/${projectId}/proposals` },
-          { label: "Not Found" },
+          { label: "Not Found", active: true },
         ]}
       >
         <div className="bg-[#171A20] border border-[#292D35] rounded-xl p-12 text-center text-[#F5F3ED] space-y-4">
@@ -418,11 +418,11 @@ export default function ProposalWorkspacePage({ params }: PageProps) {
 
   return (
     <AppShell
+      projectId={projectId}
       breadcrumbs={[
-        { label: "Dashboard", href: "/" },
         { label: `Project (${projectId.slice(0, 8)}...)`, href: `/projects/${projectId}/baseline` },
         { label: "Proposals", href: `/projects/${projectId}/proposals` },
-        { label: `v${proposal.version}` },
+        { label: `v${proposal.version}`, active: true },
       ]}
       actions={
         <div className="flex items-center gap-2 flex-wrap">

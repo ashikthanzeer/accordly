@@ -14,6 +14,25 @@ export interface BreadcrumbItem {
   active?: boolean;
 }
 
+/**
+ * Sanitizes and normalizes breadcrumb items passed to AppShell.
+ * Strips redundant root links (href === "/") or items labeled "Dashboard"
+ * because AppShell always provides the root Dashboard breadcrumb anchor.
+ */
+export function sanitizeBreadcrumbs(items?: BreadcrumbItem[]): BreadcrumbItem[] {
+  if (!items || !Array.isArray(items)) return [];
+  return items.filter((b) => {
+    if (!b || typeof b.label !== "string") return false;
+    const normalizedLabel = b.label.trim().toLowerCase();
+    const isRootHref = b.href === "/";
+    const isDashboardLabel = normalizedLabel === "dashboard";
+    if (isRootHref || isDashboardLabel) {
+      return false;
+    }
+    return true;
+  });
+}
+
 interface AppShellProps {
   children: React.ReactNode;
   breadcrumbs?: BreadcrumbItem[];
@@ -146,7 +165,7 @@ export function AppShell({
                     Dashboard
                   </Link>
 
-                  {breadcrumbs.map((b, idx) => (
+                  {sanitizeBreadcrumbs(breadcrumbs).map((b, idx) => (
                     <React.Fragment key={idx}>
                       <span className="text-[#292D35]">/</span>
                       {b.href && !b.active ? (

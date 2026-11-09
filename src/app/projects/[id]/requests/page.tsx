@@ -139,10 +139,10 @@ export default function ProjectRequestsPage({ params }: PageProps) {
 
   return (
     <AppShell
+      projectId={projectId}
       breadcrumbs={[
-        { label: "Dashboard", href: "/" },
         { label: `Project (${projectId.slice(0, 8)}...)`, href: `/projects/${projectId}/baseline` },
-        { label: "Scope Intelligence" },
+        { label: "Scope Intelligence", active: true },
       ]}
     >
       <div className="space-y-8">

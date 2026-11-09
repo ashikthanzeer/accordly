@@ -90,10 +90,10 @@ export default function ProposalsListPage({ params }: PageProps) {
 
   return (
     <AppShell
+      projectId={projectId}
       breadcrumbs={[
-        { label: "Dashboard", href: "/" },
         { label: `Project (${projectId.slice(0, 8)}...)`, href: `/projects/${projectId}/baseline` },
-        { label: "Change Proposals" },
+        { label: "Change Proposals", active: true },
       ]}
     >
       <div className="space-y-6">
